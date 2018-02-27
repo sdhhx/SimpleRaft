@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "cc.litstar.rpc";
+option java_outer_classname = "RaftProto";
+
+// Raft service definition.
+service Raft {
+	//rpc SayHello (HelloRequest) returns (HelloReply) {}
+	rpc RaftRequestVoteRpc (RequestVoteArgs) returns (RequestVoteReply) {};
+	rpc RaftAppendEntriesRpc (AppendEntriesArgs) returns (AppendEntriesReply) {};
+}
+
+// 请求投票RPC参数
+message RequestVoteArgs {
+	int32 Term = 1;
+	int32 CandidateId = 2;
+	int32 LastLogTerm = 3;
+	int32 LastLogIndex = 4;
+}
+
+// 请求投票RPC回复
+message RequestVoteReply {
+	int32 Term = 1;
+	bool VoteGranted = 2;
+}
+
+// 附加日志RPC参数(由领导人发送)
+// 空日志项为心跳，否则带有信息
+message AppendEntriesArgs {
+	int32 Term = 1;
+	int32 LeaderId = 2;
+	int32 PrevLogTerm = 3;
+	int32 PrevLogIndex = 4;
+	message LogEntry {
+		string op = 1;
+		string data = 2;
+	}
+	repeated LogEntry Entries = 5;
+	int32 LeaderCommit = 6;
+}
+
+// 附加日志RPC返回值
+message AppendEntriesReply {
+	int32 Term = 1;
+	bool Success = 2;
+	int32 NextIndex = 3;
+}
