@@ -34,10 +34,30 @@ public class RaftCall {
 		channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
 	}
 	
+	public AppendEntriesReply appendEntriesCall(AppendEntriesArgs request) {
+		try {
+			AppendEntriesReply reply = blockingStub.raftAppendEntriesRpc(request);
+			return reply;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	public RequestVoteReply requestVoteCall(RequestVoteArgs request) {
+		try {
+			RequestVoteReply reply = blockingStub.raftRequestVoteRpc(request);
+			return reply;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
 	public AppendEntriesReplyPojo appendEntriesCall(AppendEntriesArgsPojo args) {
 		List<LogEntry> entries = new LinkedList<>();
 		for(LogEntryPojo entry : args.getEntries()) {
-			entries.add(LogEntry.newBuilder().setOp(entry.getOp())
+			entries.add(LogEntry.newBuilder().setLogIndex(entry.getLogIndex())
+											 .setLogTerm(entry.getLogTerm())
+											 .setOp(entry.getOp())
 											 .setData(entry.getData())
 											 .build());
 		}
@@ -48,11 +68,13 @@ public class RaftCall {
 																  .addAllEntries(entries)
 																  .setLeaderCommit(args.getLeaderCommit())
 																  .build();
-		AppendEntriesReply reply = blockingStub.raftAppendEntriesRpc(request);
-		if(reply != null) {
+		try {
+			AppendEntriesReply reply = blockingStub.raftAppendEntriesRpc(request);
 			return new AppendEntriesReplyPojo(reply.getTerm(), reply.getSuccess(), reply.getNextIndex());
+		} catch (Exception e) {
+			return null;
 		}
-		return null;
+		
 	}
 	
 	public RequestVoteReplyPojo requestVoteCall(RequestVoteArgsPojo args) {
@@ -61,11 +83,12 @@ public class RaftCall {
 															  .setLastLogTerm(args.getLastLogTerm())
 															  .setLastLogIndex(args.getLastLogIndex())
 															  .build();
-		RequestVoteReply reply = blockingStub.raftRequestVoteRpc(request);
-		if(reply != null) {
+		try {
+			RequestVoteReply reply = blockingStub.raftRequestVoteRpc(request);
 			return new RequestVoteReplyPojo(reply.getTerm(), reply.getVoteGranted());
+		} catch (Exception e) {
+			return null;
 		}
-		return null;
 	}
 	
 }

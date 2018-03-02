@@ -118,21 +118,31 @@ public  final class AppendEntriesArgs extends
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional string op = 1;</code>
+     * <code>optional int32 LogIndex = 1;</code>
+     */
+    int getLogIndex();
+
+    /**
+     * <code>optional int32 LogTerm = 2;</code>
+     */
+    int getLogTerm();
+
+    /**
+     * <code>optional string Op = 3;</code>
      */
     java.lang.String getOp();
     /**
-     * <code>optional string op = 1;</code>
+     * <code>optional string Op = 3;</code>
      */
     com.google.protobuf.ByteString
         getOpBytes();
 
     /**
-     * <code>optional string data = 2;</code>
+     * <code>optional string Data = 4;</code>
      */
     java.lang.String getData();
     /**
-     * <code>optional string data = 2;</code>
+     * <code>optional string Data = 4;</code>
      */
     com.google.protobuf.ByteString
         getDataBytes();
@@ -149,6 +159,8 @@ public  final class AppendEntriesArgs extends
       super(builder);
     }
     private LogEntry() {
+      logIndex_ = 0;
+      logTerm_ = 0;
       op_ = "";
       data_ = "";
     }
@@ -178,13 +190,23 @@ public  final class AppendEntriesArgs extends
               }
               break;
             }
-            case 10: {
+            case 8: {
+
+              logIndex_ = input.readInt32();
+              break;
+            }
+            case 16: {
+
+              logTerm_ = input.readInt32();
+              break;
+            }
+            case 26: {
               java.lang.String s = input.readStringRequireUtf8();
 
               op_ = s;
               break;
             }
-            case 18: {
+            case 34: {
               java.lang.String s = input.readStringRequireUtf8();
 
               data_ = s;
@@ -213,10 +235,28 @@ public  final class AppendEntriesArgs extends
               cc.litstar.rpc.AppendEntriesArgs.LogEntry.class, cc.litstar.rpc.AppendEntriesArgs.LogEntry.Builder.class);
     }
 
-    public static final int OP_FIELD_NUMBER = 1;
+    public static final int LOGINDEX_FIELD_NUMBER = 1;
+    private int logIndex_;
+    /**
+     * <code>optional int32 LogIndex = 1;</code>
+     */
+    public int getLogIndex() {
+      return logIndex_;
+    }
+
+    public static final int LOGTERM_FIELD_NUMBER = 2;
+    private int logTerm_;
+    /**
+     * <code>optional int32 LogTerm = 2;</code>
+     */
+    public int getLogTerm() {
+      return logTerm_;
+    }
+
+    public static final int OP_FIELD_NUMBER = 3;
     private volatile java.lang.Object op_;
     /**
-     * <code>optional string op = 1;</code>
+     * <code>optional string Op = 3;</code>
      */
     public java.lang.String getOp() {
       java.lang.Object ref = op_;
@@ -231,7 +271,7 @@ public  final class AppendEntriesArgs extends
       }
     }
     /**
-     * <code>optional string op = 1;</code>
+     * <code>optional string Op = 3;</code>
      */
     public com.google.protobuf.ByteString
         getOpBytes() {
@@ -247,10 +287,10 @@ public  final class AppendEntriesArgs extends
       }
     }
 
-    public static final int DATA_FIELD_NUMBER = 2;
+    public static final int DATA_FIELD_NUMBER = 4;
     private volatile java.lang.Object data_;
     /**
-     * <code>optional string data = 2;</code>
+     * <code>optional string Data = 4;</code>
      */
     public java.lang.String getData() {
       java.lang.Object ref = data_;
@@ -265,7 +305,7 @@ public  final class AppendEntriesArgs extends
       }
     }
     /**
-     * <code>optional string data = 2;</code>
+     * <code>optional string Data = 4;</code>
      */
     public com.google.protobuf.ByteString
         getDataBytes() {
@@ -293,11 +333,17 @@ public  final class AppendEntriesArgs extends
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      if (logIndex_ != 0) {
+        output.writeInt32(1, logIndex_);
+      }
+      if (logTerm_ != 0) {
+        output.writeInt32(2, logTerm_);
+      }
       if (!getOpBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, op_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, op_);
       }
       if (!getDataBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, data_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, data_);
       }
     }
 
@@ -306,11 +352,19 @@ public  final class AppendEntriesArgs extends
       if (size != -1) return size;
 
       size = 0;
+      if (logIndex_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(1, logIndex_);
+      }
+      if (logTerm_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(2, logTerm_);
+      }
       if (!getOpBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, op_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, op_);
       }
       if (!getDataBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, data_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, data_);
       }
       memoizedSize = size;
       return size;
@@ -328,6 +382,10 @@ public  final class AppendEntriesArgs extends
       cc.litstar.rpc.AppendEntriesArgs.LogEntry other = (cc.litstar.rpc.AppendEntriesArgs.LogEntry) obj;
 
       boolean result = true;
+      result = result && (getLogIndex()
+          == other.getLogIndex());
+      result = result && (getLogTerm()
+          == other.getLogTerm());
       result = result && getOp()
           .equals(other.getOp());
       result = result && getData()
@@ -342,6 +400,10 @@ public  final class AppendEntriesArgs extends
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (37 * hash) + LOGINDEX_FIELD_NUMBER;
+      hash = (53 * hash) + getLogIndex();
+      hash = (37 * hash) + LOGTERM_FIELD_NUMBER;
+      hash = (53 * hash) + getLogTerm();
       hash = (37 * hash) + OP_FIELD_NUMBER;
       hash = (53 * hash) + getOp().hashCode();
       hash = (37 * hash) + DATA_FIELD_NUMBER;
@@ -464,6 +526,10 @@ public  final class AppendEntriesArgs extends
       }
       public Builder clear() {
         super.clear();
+        logIndex_ = 0;
+
+        logTerm_ = 0;
+
         op_ = "";
 
         data_ = "";
@@ -490,6 +556,8 @@ public  final class AppendEntriesArgs extends
 
       public cc.litstar.rpc.AppendEntriesArgs.LogEntry buildPartial() {
         cc.litstar.rpc.AppendEntriesArgs.LogEntry result = new cc.litstar.rpc.AppendEntriesArgs.LogEntry(this);
+        result.logIndex_ = logIndex_;
+        result.logTerm_ = logTerm_;
         result.op_ = op_;
         result.data_ = data_;
         onBuilt();
@@ -533,6 +601,12 @@ public  final class AppendEntriesArgs extends
 
       public Builder mergeFrom(cc.litstar.rpc.AppendEntriesArgs.LogEntry other) {
         if (other == cc.litstar.rpc.AppendEntriesArgs.LogEntry.getDefaultInstance()) return this;
+        if (other.getLogIndex() != 0) {
+          setLogIndex(other.getLogIndex());
+        }
+        if (other.getLogTerm() != 0) {
+          setLogTerm(other.getLogTerm());
+        }
         if (!other.getOp().isEmpty()) {
           op_ = other.op_;
           onChanged();
@@ -567,9 +641,61 @@ public  final class AppendEntriesArgs extends
         return this;
       }
 
+      private int logIndex_ ;
+      /**
+       * <code>optional int32 LogIndex = 1;</code>
+       */
+      public int getLogIndex() {
+        return logIndex_;
+      }
+      /**
+       * <code>optional int32 LogIndex = 1;</code>
+       */
+      public Builder setLogIndex(int value) {
+        
+        logIndex_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int32 LogIndex = 1;</code>
+       */
+      public Builder clearLogIndex() {
+        
+        logIndex_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int logTerm_ ;
+      /**
+       * <code>optional int32 LogTerm = 2;</code>
+       */
+      public int getLogTerm() {
+        return logTerm_;
+      }
+      /**
+       * <code>optional int32 LogTerm = 2;</code>
+       */
+      public Builder setLogTerm(int value) {
+        
+        logTerm_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int32 LogTerm = 2;</code>
+       */
+      public Builder clearLogTerm() {
+        
+        logTerm_ = 0;
+        onChanged();
+        return this;
+      }
+
       private java.lang.Object op_ = "";
       /**
-       * <code>optional string op = 1;</code>
+       * <code>optional string Op = 3;</code>
        */
       public java.lang.String getOp() {
         java.lang.Object ref = op_;
@@ -584,7 +710,7 @@ public  final class AppendEntriesArgs extends
         }
       }
       /**
-       * <code>optional string op = 1;</code>
+       * <code>optional string Op = 3;</code>
        */
       public com.google.protobuf.ByteString
           getOpBytes() {
@@ -600,7 +726,7 @@ public  final class AppendEntriesArgs extends
         }
       }
       /**
-       * <code>optional string op = 1;</code>
+       * <code>optional string Op = 3;</code>
        */
       public Builder setOp(
           java.lang.String value) {
@@ -613,7 +739,7 @@ public  final class AppendEntriesArgs extends
         return this;
       }
       /**
-       * <code>optional string op = 1;</code>
+       * <code>optional string Op = 3;</code>
        */
       public Builder clearOp() {
         
@@ -622,7 +748,7 @@ public  final class AppendEntriesArgs extends
         return this;
       }
       /**
-       * <code>optional string op = 1;</code>
+       * <code>optional string Op = 3;</code>
        */
       public Builder setOpBytes(
           com.google.protobuf.ByteString value) {
@@ -638,7 +764,7 @@ public  final class AppendEntriesArgs extends
 
       private java.lang.Object data_ = "";
       /**
-       * <code>optional string data = 2;</code>
+       * <code>optional string Data = 4;</code>
        */
       public java.lang.String getData() {
         java.lang.Object ref = data_;
@@ -653,7 +779,7 @@ public  final class AppendEntriesArgs extends
         }
       }
       /**
-       * <code>optional string data = 2;</code>
+       * <code>optional string Data = 4;</code>
        */
       public com.google.protobuf.ByteString
           getDataBytes() {
@@ -669,7 +795,7 @@ public  final class AppendEntriesArgs extends
         }
       }
       /**
-       * <code>optional string data = 2;</code>
+       * <code>optional string Data = 4;</code>
        */
       public Builder setData(
           java.lang.String value) {
@@ -682,7 +808,7 @@ public  final class AppendEntriesArgs extends
         return this;
       }
       /**
-       * <code>optional string data = 2;</code>
+       * <code>optional string Data = 4;</code>
        */
       public Builder clearData() {
         
@@ -691,7 +817,7 @@ public  final class AppendEntriesArgs extends
         return this;
       }
       /**
-       * <code>optional string data = 2;</code>
+       * <code>optional string Data = 4;</code>
        */
       public Builder setDataBytes(
           com.google.protobuf.ByteString value) {

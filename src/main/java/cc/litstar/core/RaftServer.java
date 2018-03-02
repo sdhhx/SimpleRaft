@@ -2,27 +2,24 @@ package cc.litstar.core;
 
 import java.io.IOException;
 
-import cc.litstar.rpc.AppendEntriesArgs;
-import cc.litstar.rpc.AppendEntriesReply;
-import cc.litstar.rpc.RaftGrpc;
-import cc.litstar.rpc.RequestVoteArgs;
-import cc.litstar.rpc.RequestVoteReply;
+import cc.litstar.rpc.RaftGrpc.RaftImplBase;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import io.grpc.stub.StreamObserver;
 
 public class RaftServer {
 
 	private int port = 50050;
 	private Server server;
+	private RaftImplBase handler;
 	
-	public RaftServer(int port) {
+	public RaftServer(int port, RaftImplBase handler) {
 		this.port = port;
+		this.handler = handler;
 	}
 	
 	private void start() throws IOException {
 		server = ServerBuilder.forPort(port)
-							  .addService(new RaftResponse())
+							  .addService(handler)
 							  .build()
 							  .start();
 		System.out.println("raft start...");
@@ -45,25 +42,6 @@ public class RaftServer {
 	private void blockUtilShutdown() throws InterruptedException {
 		if(server != null) {
 			server.awaitTermination();
-		}
-	}
-	
-	//Rpc Response
-	private class RaftResponse extends RaftGrpc.RaftImplBase {
-		@Override
-		public void raftRequestVoteRpc(RequestVoteArgs request, StreamObserver<RequestVoteReply> responseObserver) {
-			System.out.println(request.getTerm());
-			RequestVoteReply reply = RequestVoteReply.newBuilder().setTerm(100).build();
-			responseObserver.onNext(reply);
-			responseObserver.onCompleted();
-		}
-
-		@Override
-		public void raftAppendEntriesRpc(AppendEntriesArgs request, StreamObserver<AppendEntriesReply> responseObserver) {
-			System.out.println(request.getTerm());
-			AppendEntriesReply reply = AppendEntriesReply.newBuilder().setTerm(100).build();
-			responseObserver.onNext(reply);
-			responseObserver.onCompleted();
 		}
 	}
 }

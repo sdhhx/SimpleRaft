@@ -52,18 +52,19 @@ public final class RaftProto {
       "\001 \001(\005\022\023\n\013CandidateId\030\002 \001(\005\022\023\n\013LastLogTer" +
       "m\030\003 \001(\005\022\024\n\014LastLogIndex\030\004 \001(\005\"5\n\020Request" +
       "VoteReply\022\014\n\004Term\030\001 \001(\005\022\023\n\013VoteGranted\030\002" +
-      " \001(\010\"\310\001\n\021AppendEntriesArgs\022\014\n\004Term\030\001 \001(\005" +
+      " \001(\010\"\353\001\n\021AppendEntriesArgs\022\014\n\004Term\030\001 \001(\005" +
       "\022\020\n\010LeaderId\030\002 \001(\005\022\023\n\013PrevLogTerm\030\003 \001(\005\022" +
       "\024\n\014PrevLogIndex\030\004 \001(\005\022,\n\007Entries\030\005 \003(\0132\033" +
       ".AppendEntriesArgs.LogEntry\022\024\n\014LeaderCom" +
-      "mit\030\006 \001(\005\032$\n\010LogEntry\022\n\n\002op\030\001 \001(\t\022\014\n\004dat" +
-      "a\030\002 \001(\t\"F\n\022AppendEntriesReply\022\014\n\004Term\030\001 ",
-      "\001(\005\022\017\n\007Success\030\002 \001(\010\022\021\n\tNextIndex\030\003 \001(\0052" +
-      "\206\001\n\004Raft\022;\n\022RaftRequestVoteRpc\022\020.Request" +
-      "VoteArgs\032\021.RequestVoteReply\"\000\022A\n\024RaftApp" +
-      "endEntriesRpc\022\022.AppendEntriesArgs\032\023.Appe" +
-      "ndEntriesReply\"\000B\035\n\016cc.litstar.rpcB\tRaft" +
-      "ProtoP\001b\006proto3"
+      "mit\030\006 \001(\005\032G\n\010LogEntry\022\020\n\010LogIndex\030\001 \001(\005\022" +
+      "\017\n\007LogTerm\030\002 \001(\005\022\n\n\002Op\030\003 \001(\t\022\014\n\004Data\030\004 \001",
+      "(\t\"F\n\022AppendEntriesReply\022\014\n\004Term\030\001 \001(\005\022\017" +
+      "\n\007Success\030\002 \001(\010\022\021\n\tNextIndex\030\003 \001(\0052\206\001\n\004R" +
+      "aft\022;\n\022RaftRequestVoteRpc\022\020.RequestVoteA" +
+      "rgs\032\021.RequestVoteReply\"\000\022A\n\024RaftAppendEn" +
+      "triesRpc\022\022.AppendEntriesArgs\032\023.AppendEnt" +
+      "riesReply\"\000B\035\n\016cc.litstar.rpcB\tRaftProto" +
+      "P\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -100,7 +101,7 @@ public final class RaftProto {
     internal_static_AppendEntriesArgs_LogEntry_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_AppendEntriesArgs_LogEntry_descriptor,
-        new java.lang.String[] { "Op", "Data", });
+        new java.lang.String[] { "LogIndex", "LogTerm", "Op", "Data", });
     internal_static_AppendEntriesReply_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_AppendEntriesReply_fieldAccessorTable = new

@@ -33,8 +33,10 @@ message AppendEntriesArgs {
 	int32 PrevLogTerm = 3;
 	int32 PrevLogIndex = 4;
 	message LogEntry {
-		string op = 1;
-		string data = 2;
+		int32 LogIndex = 1;
+		int32 LogTerm = 2;
+		string Op = 3;
+		string Data = 4;
 	}
 	repeated LogEntry Entries = 5;
 	int32 LeaderCommit = 6;

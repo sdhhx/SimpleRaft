@@ -12,28 +12,27 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-public class ConfReader {
-	private String confPath = "conf/RaftList.conf";
-	private final static Logger logger = LoggerFactory.getLogger(ConfReader.class);
+public class ConfManager {
+	private String confPath = "conf/Raft.conf";
+	private final static Logger logger = LoggerFactory.getLogger(ConfManager.class);
 	
 	public static RaftConfig config = null;
 	
 	public static RaftConfig getConfig() {
 		if(config == null) {
-			new ConfReader().readConf();
+			new ConfManager().readConf();
 		}
 		return config;
 	}
 	
-	private ConfReader() {
+	private ConfManager() {
 		super();
 	}
 	
-	private void readConf(){
+	private void readConf() {
 		//读取Json字符串
 		String json = "";
 		String line = null;
-		logger.info("Starting reading proxy information from ProxyList.conf");
 		try(BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(confPath), "UTF-8")) ){
 			while((line=in.readLine())!=null){
 				//注释以;开头
@@ -47,14 +46,17 @@ public class ConfReader {
 		
 		json = json.replaceAll("\\s+", "");
 		Gson gson = new Gson();  
-		Type type = new TypeToken<ArrayList<RaftConfig>>(){}.getType();  
+		Type type = new TypeToken<RaftConfig>(){}.getType();  
 		try{
 			//过滤非法字符
 			config = gson.fromJson(json, type);  
 		}catch (Exception e) {
-			logger.error("Cannot read configure file -- errors found in the file");
 			e.printStackTrace();
 			System.exit(0);
 		}
+	}
+	
+	public static void main(String[] args) {
+		ConfManager.getConfig();
 	}
 }
