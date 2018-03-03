@@ -17,7 +17,7 @@ public class RaftServer {
 		this.handler = handler;
 	}
 	
-	private void start() throws IOException {
+	public void start() throws IOException {
 		server = ServerBuilder.forPort(port)
 							  .addService(handler)
 							  .build()
@@ -33,13 +33,13 @@ public class RaftServer {
 		});
 	}
 	
-	private void stop() {
+	public void stop() {
 		if(server != null) {
 			server.shutdown();
 		}
 	}
 
-	private void blockUtilShutdown() throws InterruptedException {
+	public void blockUtilShutdown() throws InterruptedException {
 		if(server != null) {
 			server.awaitTermination();
 		}

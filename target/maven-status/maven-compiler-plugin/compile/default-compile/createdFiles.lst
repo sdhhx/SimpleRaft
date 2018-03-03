@@ -2,12 +2,15 @@ cc\litstar\core\RaftServer$1.class
 cc\litstar\rpc\RaftGrpc$RaftImplBase.class
 cc\litstar\rpc\RequestVoteArgsOrBuilder.class
 cc\litstar\rpc\RaftGrpc$RaftStub.class
+cc\litstar\rpc\InstallSnapshotReply.class
+cc\litstar\rpc\InstallSnapshotArgs$Builder.class
 cc\litstar\rpc\AppendEntriesArgs$LogEntry.class
 cc\litstar\rpc\RequestVoteArgs.class
 cc\litstar\rpc\AppendEntriesArgs$1.class
 cc\litstar\rpc\AppendEntriesArgs$LogEntry$1.class
 cc\litstar\rpc\RequestVoteReply$Builder.class
 cc\litstar\rpc\RaftProto.class
+cc\litstar\rpc\InstallSnapshotReplyOrBuilder.class
 cc\litstar\rpc\AppendEntriesReply.class
 cc\litstar\rpc\AppendEntriesReplyOrBuilder.class
 cc\litstar\rpc\AppendEntriesReply$Builder.class
@@ -15,6 +18,8 @@ cc\litstar\rpc\RequestVoteArgs$1.class
 cc\litstar\rpc\AppendEntriesArgs$LogEntryOrBuilder.class
 cc\litstar\rpc\RequestVoteArgs$Builder.class
 cc\litstar\rpc\AppendEntriesArgs$LogEntry$Builder.class
+cc\litstar\rpc\InstallSnapshotArgsOrBuilder.class
+cc\litstar\rpc\InstallSnapshotReply$1.class
 cc\litstar\rpc\RequestVoteReply$1.class
 cc\litstar\rpc\RaftGrpc$RaftBlockingStub.class
 cc\litstar\rpc\AppendEntriesArgs$Builder.class
@@ -23,8 +28,12 @@ cc\litstar\rpc\RaftGrpc.class
 cc\litstar\rpc\RaftGrpc$MethodHandlers.class
 cc\litstar\rpc\AppendEntriesArgs.class
 cc\litstar\rpc\AppendEntriesArgsOrBuilder.class
+cc\litstar\rpc\InstallSnapshotArgs.class
+cc\litstar\rpc\InstallSnapshotArgs$1.class
 cc\litstar\rpc\RequestVoteReplyOrBuilder.class
 cc\litstar\rpc\RequestVoteReply.class
 cc\litstar\rpc\RaftGrpc$RaftFutureStub.class
 cc\litstar\rpc\RaftProto$1.class
+cc\litstar\core\RaftCore$3.class
+cc\litstar\rpc\InstallSnapshotReply$Builder.class
 cc\litstar\rpc\RaftGrpc$1.class

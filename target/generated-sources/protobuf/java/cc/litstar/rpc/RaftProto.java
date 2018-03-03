@@ -39,6 +39,16 @@ public final class RaftProto {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_AppendEntriesReply_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_InstallSnapshotArgs_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_InstallSnapshotArgs_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_InstallSnapshotReply_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_InstallSnapshotReply_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -59,12 +69,18 @@ public final class RaftProto {
       "mit\030\006 \001(\005\032G\n\010LogEntry\022\020\n\010LogIndex\030\001 \001(\005\022" +
       "\017\n\007LogTerm\030\002 \001(\005\022\n\n\002Op\030\003 \001(\t\022\014\n\004Data\030\004 \001",
       "(\t\"F\n\022AppendEntriesReply\022\014\n\004Term\030\001 \001(\005\022\017" +
-      "\n\007Success\030\002 \001(\010\022\021\n\tNextIndex\030\003 \001(\0052\206\001\n\004R" +
+      "\n\007Success\030\002 \001(\010\022\021\n\tNextIndex\030\003 \001(\005\"x\n\023In" +
+      "stallSnapshotArgs\022\014\n\004Term\030\001 \001(\005\022\020\n\010Leade" +
+      "rId\030\002 \001(\005\022\031\n\021LastIncludedIndex\030\003 \001(\005\022\030\n\020" +
+      "LastIncludedTerm\030\004 \001(\005\022\014\n\004data\030\005 \001(\t\"$\n\024" +
+      "InstallSnapshotReply\022\014\n\004Term\030\001 \001(\0052\317\001\n\004R" +
       "aft\022;\n\022RaftRequestVoteRpc\022\020.RequestVoteA" +
       "rgs\032\021.RequestVoteReply\"\000\022A\n\024RaftAppendEn" +
       "triesRpc\022\022.AppendEntriesArgs\032\023.AppendEnt" +
-      "riesReply\"\000B\035\n\016cc.litstar.rpcB\tRaftProto" +
-      "P\001b\006proto3"
+      "riesReply\"\000\022G\n\026RaftInstallSnapshotRpc\022\024.",
+      "InstallSnapshotArgs\032\025.InstallSnapshotRep" +
+      "ly\"\000B\035\n\016cc.litstar.rpcB\tRaftProtoP\001b\006pro" +
+      "to3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -108,6 +124,18 @@ public final class RaftProto {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_AppendEntriesReply_descriptor,
         new java.lang.String[] { "Term", "Success", "NextIndex", });
+    internal_static_InstallSnapshotArgs_descriptor =
+      getDescriptor().getMessageTypes().get(4);
+    internal_static_InstallSnapshotArgs_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_InstallSnapshotArgs_descriptor,
+        new java.lang.String[] { "Term", "LeaderId", "LastIncludedIndex", "LastIncludedTerm", "Data", });
+    internal_static_InstallSnapshotReply_descriptor =
+      getDescriptor().getMessageTypes().get(5);
+    internal_static_InstallSnapshotReply_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_InstallSnapshotReply_descriptor,
+        new java.lang.String[] { "Term", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

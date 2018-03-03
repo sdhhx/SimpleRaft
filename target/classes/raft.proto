@@ -9,6 +9,7 @@ service Raft {
 	//rpc SayHello (HelloRequest) returns (HelloReply) {}
 	rpc RaftRequestVoteRpc (RequestVoteArgs) returns (RequestVoteReply) {};
 	rpc RaftAppendEntriesRpc (AppendEntriesArgs) returns (AppendEntriesReply) {};
+	rpc RaftInstallSnapshotRpc (InstallSnapshotArgs) returns (InstallSnapshotReply) {};
 }
 
 // 请求投票RPC参数
@@ -47,4 +48,18 @@ message AppendEntriesReply {
 	int32 Term = 1;
 	bool Success = 2;
 	int32 NextIndex = 3;
+}
+
+// 安装快照RPC
+message InstallSnapshotArgs {
+	int32 Term = 1;
+	int32 LeaderId = 2;
+	int32 LastIncludedIndex = 3;
+	int32 LastIncludedTerm = 4;
+	string data = 5;
+}
+
+// 安装快照RPC返回值
+message InstallSnapshotReply {
+	int32 Term = 1;
 }

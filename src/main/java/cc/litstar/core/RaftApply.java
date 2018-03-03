@@ -2,9 +2,9 @@ package cc.litstar.core;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import cc.litstar.message.ApplyMsg;
+import cc.litstar.beans.ApplyMsg;
 
-public class RaftCommitHandler implements Runnable {
+public class RaftApply implements Runnable {
 
 	@Override
 	public void run() {

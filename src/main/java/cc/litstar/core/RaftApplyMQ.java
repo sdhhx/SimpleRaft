@@ -2,7 +2,7 @@ package cc.litstar.core;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import cc.litstar.message.ApplyMsg;
+import cc.litstar.beans.ApplyMsg;
 
 /**
  * @author HHX

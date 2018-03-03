@@ -1,12 +1,24 @@
 package cc.litstar.core;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import cc.litstar.beans.ApplyMsg;
+import cc.litstar.beans.LogEntryObj;
+import cc.litstar.conf.ConfManager;
 import cc.litstar.conf.RaftConfig;
-import cc.litstar.message.ApplyMsg;
-import cc.litstar.message.LogEntryPojo;
+import cc.litstar.node.RaftNode;
 import cc.litstar.rpc.AppendEntriesArgs;
 import cc.litstar.rpc.AppendEntriesArgs.LogEntry;
 import cc.litstar.rpc.AppendEntriesReply;
@@ -16,45 +28,54 @@ import cc.litstar.rpc.RequestVoteReply;
 import io.grpc.stub.StreamObserver;
 
 public class RaftCore {
-	//RPC调用
-	private RaftCallHandler handler;
+	//Raft Server
+	private RaftServer server;
 	//RPC句柄
 	private Map<Integer, RaftCall> peers;
+	//RPC调用
+	private RaftCallHandler handler;
 	//当前编号
-	private int number;
+	private int id;
 	//当前状态
 	private RaftStatus status;
 	//投票数
-	private int voteCount;
+	private volatile int voteCount;
 	//服务器最后一次知道的任期号
-	private int currentTerm;
+	private volatile int currentTerm;
 	//在当时获得选票的候选人ID
-	private int voteFor;
+	private volatile int voteFor;
 	//日志条目集，每一条日志包含一个用户状态机执行的指令，和收到的任期号
-	private List<LogEntryPojo> log;
+	private volatile List<LogEntryObj> log;
 	//最大的已知被提交的日志条目集
-	private int commitIndex;
+	private volatile int commitIndex;
 	//最后被应用到状态机的日志条目索引值
-	private int lastApplied;
+	private volatile int lastApplied;
 	
-	//复制状态机Channel
-	private LinkedBlockingQueue<String> smChannel;
-	//提交与应用解耦
+	//心跳时间间隔
+	private int hbInterval;
+	
+	//状态Channel(put,offer添加考虑队列是否满)
+	private LinkedBlockingQueue<String> stateChannel;
+	//提交Channel
+	private LinkedBlockingQueue<String> commitChannel;
+	//应用Channel
 	private LinkedBlockingQueue<ApplyMsg> applyChannel;
 	
 	//Leader相关变量
 	//对于每一个服务器，需要发送给他的下一条日志的索引值
-	private Map<Integer, Integer> nextIndex;
+	private volatile Map<Integer, Integer> nextIndex;
 	//对于每一个服务器，已经复制给他的日志的最高索引值
-	private Map<Integer, Integer> matchIndex;
+	private volatile Map<Integer, Integer> matchIndex;
 	
 	//Config
 	private RaftConfig config;
+	//线程池，RPC调用线程
+	private volatile ExecutorService rpcCallPool;
 	
-	//先不急
-	public RaftCore() {
-		
-	}
+	//输出日志信息
+	private final static Logger logger = LoggerFactory.getLogger(RaftCore.class);
+	
+	public RaftCore() { }
 	
 	//返回当前任期
 	public int getCurrentTerm() {
@@ -76,23 +97,165 @@ public class RaftCore {
 		return log.get(log.size() - 1).getLogTerm();
 	}
 	
+	public int getRandomTime(int start, int end) {
+		Random rand = new Random();
+		return rand.nextInt(end - start) + start;
+	}
+	
 	//初始化操作
 	public void init() {
-		;
+		this.config = ConfManager.getConfig();
+		RaftNode curNode = config.getLocalNode();
+		List<RaftNode> remoteList = config.getRemoteNode();
+		
+		this.id = curNode.getId();
+		this.hbInterval = config.getHbInterval();
+		this.handler = new RaftCallHandler();
+		this.server = new RaftServer(curNode.getPort(), handler);
+		
+		this.peers = new HashMap<>();
+		for(RaftNode remoteNode : remoteList) {
+			int remoteId = remoteNode.getId();
+			RaftCall client = new RaftCall(remoteNode.getIpAddress(), remoteNode.getPort());
+			peers.put(remoteId, client);
+		}
+		this.status = RaftStatus.FOLLOWER;
+		this.voteFor = -1;
+		
+		this.log = new LinkedList<>();
+		LogEntryObj firstLog = new LogEntryObj();
+		firstLog.setLogTerm(0);
+		this.log.add(firstLog);
+		
+		this.currentTerm = 0;
+		this.stateChannel = new LinkedBlockingQueue<>();
+		this.commitChannel = new LinkedBlockingQueue<>();
+		this.applyChannel = RaftApplyMQ.getMQ();
+		this.rpcCallPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
 	}
+	
 	
 	/**
 	 * 启动Raft
+	 * @throws IOException 
 	 */
-	public void start() {
-		
+	public void start() throws IOException {
+		this.server.start();
+		//Raft状态变更
+		new Thread(new Runnable() {		
+			@Override
+			public void run() {
+				try {
+					String msg = null;
+					while(!Thread.currentThread().isInterrupted()) {
+						switch (status) {
+						case FOLLOWER:
+							msg = stateChannel.poll(getRandomTime(3 * hbInterval, 5 * hbInterval),
+									TimeUnit.MILLISECONDS);
+							//超时开始重新选举
+							if(msg == null) {
+								status = RaftStatus.CANDIDATE;
+							} else if(msg.equals("HeartBeat")) { //收到心跳
+							} else if(msg.equals("GrantVote")) { //已投票				
+							} else {}
+							break;
+						case LEADER:
+							//广播附加日志条目
+							broadcastAppendEntries();
+							Thread.sleep(hbInterval);
+							break;
+						case CANDIDATE:
+							synchronized (RaftCore.this) {
+								//为自己投票
+								currentTerm++;
+								voteFor = id;
+								voteCount = 1;
+							}
+							//CANDITATE的三种状态：
+							// 1. 自己赢得了选举
+							// 2. 其他服务器赢得了选举
+							// 3. 一段时间后没有选出Leader
+							stateChannel.clear();//冗余元素清除
+							new Thread(() -> broadcastRequestVote()).start();
+							msg = stateChannel.poll(getRandomTime(3 * hbInterval, 5 * hbInterval),
+									TimeUnit.MILLISECONDS);
+							//超时开始重新选举
+							if(msg == null) {
+								//选票瓜分没有选出Leader，超时后重新发生选主
+							} else if(msg.equals("HeartBeat")) {
+								//已有节点被选为主
+								status = RaftStatus.FOLLOWER;
+							} else if(msg.equals("SetLeader")) {	
+								synchronized (RaftCore.this) {
+									//状态切换到LEADER
+									status = RaftStatus.LEADER;
+									//重建Leader数据结构
+									nextIndex = new HashMap<>();
+									matchIndex = new HashMap<>();
+									for(int server : peers.keySet()) {
+										//设置初值，算法调整
+										nextIndex.put(server, RaftCore.this.getLastIndex() + 1);
+										matchIndex.put(server, 0);
+									}
+									stateChannel.clear();//
+								}
+							} else {}
+							break;
+						default:
+							break;
+						}
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}).start();
+		//消息加入队列之后的操作
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					String msg = null;
+					while(!Thread.currentThread().isInterrupted()) {
+						msg = commitChannel.take();
+						if(!msg.equals("Commit")) {
+							continue;
+						}
+						int baseIndex = log.get(0).getLogIndex();
+						for(int i = lastApplied + 1; i <= commitIndex; i++) {
+							LogEntryObj logety = log.get(i - baseIndex);
+							ApplyMsg applyMsg = new ApplyMsg(i, logety.getOp(), logety.getData(), false, null);
+							applyChannel.add(applyMsg);
+							lastApplied = i;
+						}
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}).start();
+	}
+	
+	public void shutdown() throws InterruptedException {
+		this.server.stop();
 	}
 	
 	/**
-	 * 日志提交?
+	 * 从客户端收到命令的处理流程
+	 * 或许需要客户端RPC?
+	 * 
+	 * 改================
 	 */
-	public void append() {
-		
+	public synchronized boolean append(String op, String data) {
+		int index = -1;
+		int term = currentTerm;
+		boolean isLeader = (status == RaftStatus.LEADER);
+		if(isLeader) {
+			//Index递增
+			index = getLastIndex() + 1;
+			log.add(new LogEntryObj(index, term, op, data));
+		}
+		return isLeader;
 	}
 
 	/**
@@ -127,12 +290,7 @@ public class RaftCore {
 					//票数过半
 					if(status == RaftStatus.CANDIDATE && voteCount > peers.size() / 2) {
 						status = RaftStatus.FOLLOWER;
-						try {
-							smChannel.put("Leader");
-						} catch (InterruptedException e) {
-							//unused
-							e.printStackTrace();
-						}
+						stateChannel.add(new String("SetLeader"));
 					}
 				}
 			}
@@ -184,15 +342,117 @@ public class RaftCore {
 	 * @author HHX
 	 */
 	public void broadcastRequestVote() {
-		;
+		RequestVoteArgs.Builder requsetBuilder = RequestVoteArgs.newBuilder();
+		RequestVoteArgs request = null;
+		synchronized (RaftCore.this) {
+			requsetBuilder.setTerm(currentTerm);
+			requsetBuilder.setCandidateId(id);
+			requsetBuilder.setLastLogTerm(RaftCore.this.getLastTerm());
+			requsetBuilder.setLastLogIndex(RaftCore.this.getLastIndex());
+		}
+		request = requsetBuilder.build();
+		for(int i : peers.keySet()) {
+			if(i != id && status == RaftStatus.CANDIDATE) {
+				rpcCallPool.execute(new RequestVoteExecutor(i, request));
+			}
+		}
 	}
 	
 	/**
-	 * 日志复制
+	 * 日志复制广播，由Leader调用
 	 * @author HHX
 	 */
 	public void broadcastAppendEntries() {
+		synchronized (RaftCore.this) {
+			//最大的已经被提交的日志集
+			int N = commitIndex;
+			//最后一条日志的索引号
+			int last = RaftCore.this.getLastIndex();
+			//第一条日志的索引号
+			int baseIndex = log.get(0).getLogIndex();
+			//如果存在一个N满足N>commitIndex， 且大多matchIndex[i] >= N, 并且日志term == currentTerm
+			//将commitIndex设置为N(已经被提交了的日志)
+			for(int i = commitIndex + 1; i <= last; i++) {
+				int num = 1;
+				for(int j : peers.keySet()) {
+					if(j != id && matchIndex.get(j) >= i &&
+							log.get(i - baseIndex).getLogTerm() == currentTerm) {
+						num++;
+					}
+					//如果过半节点都已经复制了日志，那么更新N
+					if(2 * num > peers.size()) {
+						N = i;
+					}
+				}
+			}
+			//有新的可以被提交的日志
+			if(N != commitIndex) {
+				commitIndex = N;
+				commitChannel.add(new String("Commit"));
+			}
+			for(int i : peers.keySet()) {
+				if(i != id && status == RaftStatus.LEADER) {
+					//需要发送的日志不是第一条日志
+					if(true /*|| nextIndex.get(i) > baseIndex*/) {
+						AppendEntriesArgs.Builder requestBuilder = AppendEntriesArgs.newBuilder();
+						AppendEntriesArgs request = null;
+						//Leader的任期号
+						requestBuilder.setTerm(currentTerm);
+						//Leader ID编号
+						requestBuilder.setLeaderId(id);
+						//nextIndex[i]为需要发送的下一条日志
+						//PrevLogIndex即为Follower的最后一条日志
+						requestBuilder.setPrevLogIndex(nextIndex.get(i) - 1);
+						//最后一条日志的任期号
+						requestBuilder.setPrevLogTerm(log.get(nextIndex.get(i) - baseIndex - 1).getLogTerm());
+						//组织日志
+						List<LogEntry> entries = new LinkedList<>();
+						for(int k = nextIndex.get(i) - baseIndex; k < log.size(); k++) {
+							LogEntryObj entryObj = log.get(k);
+							entries.add(LogEntry.newBuilder().setLogIndex(entryObj.getLogIndex()).
+															  setLogTerm(entryObj.getLogTerm()).
+															  setOp(entryObj.getOp()).
+															  setData(entryObj.getData()).
+															  build());								 
+						}
+						requestBuilder.setLeaderCommit(commitIndex);
+						request = requestBuilder.build();
+						rpcCallPool.execute(new AppendEntriesExecutor(i, request));
+					}
+				}
+			}
+		}	
+	}
+	
+	class RequestVoteExecutor implements Runnable {
+		private int server;
+		private RequestVoteArgs request;
 		
+		public RequestVoteExecutor(int server, RequestVoteArgs request) {
+			super();
+			this.server = server;
+			this.request = request;
+		}
+		@Override
+		public void run() {
+			sendRequestVote(server, request);
+		}
+	}
+	
+	class AppendEntriesExecutor implements Runnable {
+		private int server;
+		private AppendEntriesArgs request;
+		
+		public AppendEntriesExecutor(int server, AppendEntriesArgs request) {
+			super();
+			this.server = server;
+			this.request = request;
+		}
+
+		@Override
+		public void run() {
+			sendAppendEntries(server, request);
+		}
 	}
 	
 	public class RaftCallHandler extends RaftGrpc.RaftImplBase {
@@ -236,15 +496,10 @@ public class RaftCore {
 				}
 				//一人一票，先到先得
 				if(uptoDate && (voteFor == -1 || voteFor == request.getCandidateId())) {
-					try {
-						smChannel.put("GrantVote");
-						status = RaftStatus.FOLLOWER;
-						replyBuilder.setVoteGranted(true);
-						voteFor = request.getCandidateId();
-					} catch (InterruptedException e) {
-						//unused
-						e.printStackTrace();
-					}
+					stateChannel.add(new String("GrantVote"));
+					status = RaftStatus.FOLLOWER;
+					replyBuilder.setVoteGranted(true);
+					voteFor = request.getCandidateId();
 				}
 				reply = replyBuilder.build();
 				responseObserver.onNext(reply);
@@ -268,12 +523,7 @@ public class RaftCore {
 					responseObserver.onCompleted();
 					return;
 				}
-				try {
-					smChannel.put("HeartBeat");
-				} catch (InterruptedException e) {
-					//unused
-					e.printStackTrace();
-				}
+				stateChannel.add(new String("HeartBeat"));
 				//任期号T大于当前任期号要立刻转换为Follower(出现了新Leader，也就是发送RPC的Leader)
 				if(request.getTerm() > currentTerm) {
 					currentTerm = request.getTerm();
@@ -325,7 +575,7 @@ public class RaftCore {
 					List<LogEntry> newLog = request.getEntriesList();
 					for(int i = 0; i < newLog.size(); i++) {
 						LogEntry rpcEntry = newLog.get(i);
-						LogEntryPojo entry = new LogEntryPojo(rpcEntry.getLogIndex(), rpcEntry.getLogTerm(),
+						LogEntryObj entry = new LogEntryObj(rpcEntry.getLogIndex(), rpcEntry.getLogTerm(),
 								rpcEntry.getOp(), rpcEntry.getData());
 						log.add(entry);
 					}
@@ -341,12 +591,7 @@ public class RaftCore {
 					} else {
 						commitIndex = request.getLeaderCommit();
 					}
-					try {
-						smChannel.put("Commit");
-					} catch (InterruptedException e) {
-						//unused
-						e.printStackTrace();
-					}
+					commitChannel.add(new String("Commit"));
 				}
 				reply = replyBuilder.build();
 				responseObserver.onNext(reply);

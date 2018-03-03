@@ -1,6 +1,6 @@
-package cc.litstar.message;
+package cc.litstar.beans;
 
-public class LogEntryPojo {
+public class LogEntryObj {
 	//Log Index and Term
 	private int logIndex;
 	private int logTerm;
@@ -8,7 +8,11 @@ public class LogEntryPojo {
 	private String op;
 	//信息
 	private String data;
-	public LogEntryPojo(int logIndex, int logTerm, String op, String data) {
+	
+	public LogEntryObj() {
+		super();
+	}
+	public LogEntryObj(int logIndex, int logTerm, String op, String data) {
 		super();
 		this.logIndex = logIndex;
 		this.logTerm = logTerm;

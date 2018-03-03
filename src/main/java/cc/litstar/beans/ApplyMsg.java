@@ -1,4 +1,4 @@
-package cc.litstar.message;
+package cc.litstar.beans;
 
 import java.util.Arrays;
 
