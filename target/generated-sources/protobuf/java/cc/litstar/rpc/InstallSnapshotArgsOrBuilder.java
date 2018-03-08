@@ -28,11 +28,11 @@ public interface InstallSnapshotArgsOrBuilder extends
   int getLastIncludedTerm();
 
   /**
-   * <code>optional string data = 5;</code>
+   * <code>optional string Data = 5;</code>
    */
   java.lang.String getData();
   /**
-   * <code>optional string data = 5;</code>
+   * <code>optional string Data = 5;</code>
    */
   com.google.protobuf.ByteString
       getDataBytes();

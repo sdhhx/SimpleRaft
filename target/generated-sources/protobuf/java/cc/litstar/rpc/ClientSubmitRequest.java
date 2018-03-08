@@ -5,24 +5,22 @@ package cc.litstar.rpc;
 
 /**
  * <pre>
- * 安装快照RPC
+ * 用户提交一个操作
+ * 每次操作轮询节点直到可以操作
  * </pre>
  *
- * Protobuf type {@code InstallSnapshotArgs}
+ * Protobuf type {@code ClientSubmitRequest}
  */
-public  final class InstallSnapshotArgs extends
+public  final class ClientSubmitRequest extends
     com.google.protobuf.GeneratedMessageV3 implements
-    // @@protoc_insertion_point(message_implements:InstallSnapshotArgs)
-    InstallSnapshotArgsOrBuilder {
-  // Use InstallSnapshotArgs.newBuilder() to construct.
-  private InstallSnapshotArgs(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+    // @@protoc_insertion_point(message_implements:ClientSubmitRequest)
+    ClientSubmitRequestOrBuilder {
+  // Use ClientSubmitRequest.newBuilder() to construct.
+  private ClientSubmitRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
-  private InstallSnapshotArgs() {
-    term_ = 0;
-    leaderId_ = 0;
-    lastIncludedIndex_ = 0;
-    lastIncludedTerm_ = 0;
+  private ClientSubmitRequest() {
+    op_ = "";
     data_ = "";
   }
 
@@ -31,7 +29,7 @@ public  final class InstallSnapshotArgs extends
   getUnknownFields() {
     return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
   }
-  private InstallSnapshotArgs(
+  private ClientSubmitRequest(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -51,27 +49,13 @@ public  final class InstallSnapshotArgs extends
             }
             break;
           }
-          case 8: {
+          case 10: {
+            java.lang.String s = input.readStringRequireUtf8();
 
-            term_ = input.readInt32();
+            op_ = s;
             break;
           }
-          case 16: {
-
-            leaderId_ = input.readInt32();
-            break;
-          }
-          case 24: {
-
-            lastIncludedIndex_ = input.readInt32();
-            break;
-          }
-          case 32: {
-
-            lastIncludedTerm_ = input.readInt32();
-            break;
-          }
-          case 42: {
+          case 18: {
             java.lang.String s = input.readStringRequireUtf8();
 
             data_ = s;
@@ -90,56 +74,54 @@ public  final class InstallSnapshotArgs extends
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return cc.litstar.rpc.RaftProto.internal_static_InstallSnapshotArgs_descriptor;
+    return cc.litstar.rpc.RaftProto.internal_static_ClientSubmitRequest_descriptor;
   }
 
   protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return cc.litstar.rpc.RaftProto.internal_static_InstallSnapshotArgs_fieldAccessorTable
+    return cc.litstar.rpc.RaftProto.internal_static_ClientSubmitRequest_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            cc.litstar.rpc.InstallSnapshotArgs.class, cc.litstar.rpc.InstallSnapshotArgs.Builder.class);
+            cc.litstar.rpc.ClientSubmitRequest.class, cc.litstar.rpc.ClientSubmitRequest.Builder.class);
   }
 
-  public static final int TERM_FIELD_NUMBER = 1;
-  private int term_;
+  public static final int OP_FIELD_NUMBER = 1;
+  private volatile java.lang.Object op_;
   /**
-   * <code>optional int32 Term = 1;</code>
+   * <code>optional string Op = 1;</code>
    */
-  public int getTerm() {
-    return term_;
+  public java.lang.String getOp() {
+    java.lang.Object ref = op_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      op_ = s;
+      return s;
+    }
   }
-
-  public static final int LEADERID_FIELD_NUMBER = 2;
-  private int leaderId_;
   /**
-   * <code>optional int32 LeaderId = 2;</code>
+   * <code>optional string Op = 1;</code>
    */
-  public int getLeaderId() {
-    return leaderId_;
+  public com.google.protobuf.ByteString
+      getOpBytes() {
+    java.lang.Object ref = op_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      op_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
   }
 
-  public static final int LASTINCLUDEDINDEX_FIELD_NUMBER = 3;
-  private int lastIncludedIndex_;
-  /**
-   * <code>optional int32 LastIncludedIndex = 3;</code>
-   */
-  public int getLastIncludedIndex() {
-    return lastIncludedIndex_;
-  }
-
-  public static final int LASTINCLUDEDTERM_FIELD_NUMBER = 4;
-  private int lastIncludedTerm_;
-  /**
-   * <code>optional int32 LastIncludedTerm = 4;</code>
-   */
-  public int getLastIncludedTerm() {
-    return lastIncludedTerm_;
-  }
-
-  public static final int DATA_FIELD_NUMBER = 5;
+  public static final int DATA_FIELD_NUMBER = 2;
   private volatile java.lang.Object data_;
   /**
-   * <code>optional string Data = 5;</code>
+   * <code>optional string Data = 2;</code>
    */
   public java.lang.String getData() {
     java.lang.Object ref = data_;
@@ -154,7 +136,7 @@ public  final class InstallSnapshotArgs extends
     }
   }
   /**
-   * <code>optional string Data = 5;</code>
+   * <code>optional string Data = 2;</code>
    */
   public com.google.protobuf.ByteString
       getDataBytes() {
@@ -182,20 +164,11 @@ public  final class InstallSnapshotArgs extends
 
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    if (term_ != 0) {
-      output.writeInt32(1, term_);
-    }
-    if (leaderId_ != 0) {
-      output.writeInt32(2, leaderId_);
-    }
-    if (lastIncludedIndex_ != 0) {
-      output.writeInt32(3, lastIncludedIndex_);
-    }
-    if (lastIncludedTerm_ != 0) {
-      output.writeInt32(4, lastIncludedTerm_);
+    if (!getOpBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, op_);
     }
     if (!getDataBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 5, data_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, data_);
     }
   }
 
@@ -204,24 +177,11 @@ public  final class InstallSnapshotArgs extends
     if (size != -1) return size;
 
     size = 0;
-    if (term_ != 0) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeInt32Size(1, term_);
-    }
-    if (leaderId_ != 0) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeInt32Size(2, leaderId_);
-    }
-    if (lastIncludedIndex_ != 0) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeInt32Size(3, lastIncludedIndex_);
-    }
-    if (lastIncludedTerm_ != 0) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeInt32Size(4, lastIncludedTerm_);
+    if (!getOpBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, op_);
     }
     if (!getDataBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, data_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, data_);
     }
     memoizedSize = size;
     return size;
@@ -233,20 +193,14 @@ public  final class InstallSnapshotArgs extends
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof cc.litstar.rpc.InstallSnapshotArgs)) {
+    if (!(obj instanceof cc.litstar.rpc.ClientSubmitRequest)) {
       return super.equals(obj);
     }
-    cc.litstar.rpc.InstallSnapshotArgs other = (cc.litstar.rpc.InstallSnapshotArgs) obj;
+    cc.litstar.rpc.ClientSubmitRequest other = (cc.litstar.rpc.ClientSubmitRequest) obj;
 
     boolean result = true;
-    result = result && (getTerm()
-        == other.getTerm());
-    result = result && (getLeaderId()
-        == other.getLeaderId());
-    result = result && (getLastIncludedIndex()
-        == other.getLastIncludedIndex());
-    result = result && (getLastIncludedTerm()
-        == other.getLastIncludedTerm());
+    result = result && getOp()
+        .equals(other.getOp());
     result = result && getData()
         .equals(other.getData());
     return result;
@@ -259,14 +213,8 @@ public  final class InstallSnapshotArgs extends
     }
     int hash = 41;
     hash = (19 * hash) + getDescriptorForType().hashCode();
-    hash = (37 * hash) + TERM_FIELD_NUMBER;
-    hash = (53 * hash) + getTerm();
-    hash = (37 * hash) + LEADERID_FIELD_NUMBER;
-    hash = (53 * hash) + getLeaderId();
-    hash = (37 * hash) + LASTINCLUDEDINDEX_FIELD_NUMBER;
-    hash = (53 * hash) + getLastIncludedIndex();
-    hash = (37 * hash) + LASTINCLUDEDTERM_FIELD_NUMBER;
-    hash = (53 * hash) + getLastIncludedTerm();
+    hash = (37 * hash) + OP_FIELD_NUMBER;
+    hash = (53 * hash) + getOp().hashCode();
     hash = (37 * hash) + DATA_FIELD_NUMBER;
     hash = (53 * hash) + getData().hashCode();
     hash = (29 * hash) + unknownFields.hashCode();
@@ -274,58 +222,58 @@ public  final class InstallSnapshotArgs extends
     return hash;
   }
 
-  public static cc.litstar.rpc.InstallSnapshotArgs parseFrom(
+  public static cc.litstar.rpc.ClientSubmitRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static cc.litstar.rpc.InstallSnapshotArgs parseFrom(
+  public static cc.litstar.rpc.ClientSubmitRequest parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static cc.litstar.rpc.InstallSnapshotArgs parseFrom(byte[] data)
+  public static cc.litstar.rpc.ClientSubmitRequest parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static cc.litstar.rpc.InstallSnapshotArgs parseFrom(
+  public static cc.litstar.rpc.ClientSubmitRequest parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static cc.litstar.rpc.InstallSnapshotArgs parseFrom(java.io.InputStream input)
+  public static cc.litstar.rpc.ClientSubmitRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static cc.litstar.rpc.InstallSnapshotArgs parseFrom(
+  public static cc.litstar.rpc.ClientSubmitRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static cc.litstar.rpc.InstallSnapshotArgs parseDelimitedFrom(java.io.InputStream input)
+  public static cc.litstar.rpc.ClientSubmitRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static cc.litstar.rpc.InstallSnapshotArgs parseDelimitedFrom(
+  public static cc.litstar.rpc.ClientSubmitRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static cc.litstar.rpc.InstallSnapshotArgs parseFrom(
+  public static cc.litstar.rpc.ClientSubmitRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static cc.litstar.rpc.InstallSnapshotArgs parseFrom(
+  public static cc.litstar.rpc.ClientSubmitRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -337,7 +285,7 @@ public  final class InstallSnapshotArgs extends
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(cc.litstar.rpc.InstallSnapshotArgs prototype) {
+  public static Builder newBuilder(cc.litstar.rpc.ClientSubmitRequest prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   public Builder toBuilder() {
@@ -353,28 +301,29 @@ public  final class InstallSnapshotArgs extends
   }
   /**
    * <pre>
-   * 安装快照RPC
+   * 用户提交一个操作
+   * 每次操作轮询节点直到可以操作
    * </pre>
    *
-   * Protobuf type {@code InstallSnapshotArgs}
+   * Protobuf type {@code ClientSubmitRequest}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-      // @@protoc_insertion_point(builder_implements:InstallSnapshotArgs)
-      cc.litstar.rpc.InstallSnapshotArgsOrBuilder {
+      // @@protoc_insertion_point(builder_implements:ClientSubmitRequest)
+      cc.litstar.rpc.ClientSubmitRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return cc.litstar.rpc.RaftProto.internal_static_InstallSnapshotArgs_descriptor;
+      return cc.litstar.rpc.RaftProto.internal_static_ClientSubmitRequest_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return cc.litstar.rpc.RaftProto.internal_static_InstallSnapshotArgs_fieldAccessorTable
+      return cc.litstar.rpc.RaftProto.internal_static_ClientSubmitRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              cc.litstar.rpc.InstallSnapshotArgs.class, cc.litstar.rpc.InstallSnapshotArgs.Builder.class);
+              cc.litstar.rpc.ClientSubmitRequest.class, cc.litstar.rpc.ClientSubmitRequest.Builder.class);
     }
 
-    // Construct using cc.litstar.rpc.InstallSnapshotArgs.newBuilder()
+    // Construct using cc.litstar.rpc.ClientSubmitRequest.newBuilder()
     private Builder() {
       maybeForceBuilderInitialization();
     }
@@ -391,13 +340,7 @@ public  final class InstallSnapshotArgs extends
     }
     public Builder clear() {
       super.clear();
-      term_ = 0;
-
-      leaderId_ = 0;
-
-      lastIncludedIndex_ = 0;
-
-      lastIncludedTerm_ = 0;
+      op_ = "";
 
       data_ = "";
 
@@ -406,27 +349,24 @@ public  final class InstallSnapshotArgs extends
 
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return cc.litstar.rpc.RaftProto.internal_static_InstallSnapshotArgs_descriptor;
+      return cc.litstar.rpc.RaftProto.internal_static_ClientSubmitRequest_descriptor;
     }
 
-    public cc.litstar.rpc.InstallSnapshotArgs getDefaultInstanceForType() {
-      return cc.litstar.rpc.InstallSnapshotArgs.getDefaultInstance();
+    public cc.litstar.rpc.ClientSubmitRequest getDefaultInstanceForType() {
+      return cc.litstar.rpc.ClientSubmitRequest.getDefaultInstance();
     }
 
-    public cc.litstar.rpc.InstallSnapshotArgs build() {
-      cc.litstar.rpc.InstallSnapshotArgs result = buildPartial();
+    public cc.litstar.rpc.ClientSubmitRequest build() {
+      cc.litstar.rpc.ClientSubmitRequest result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
       return result;
     }
 
-    public cc.litstar.rpc.InstallSnapshotArgs buildPartial() {
-      cc.litstar.rpc.InstallSnapshotArgs result = new cc.litstar.rpc.InstallSnapshotArgs(this);
-      result.term_ = term_;
-      result.leaderId_ = leaderId_;
-      result.lastIncludedIndex_ = lastIncludedIndex_;
-      result.lastIncludedTerm_ = lastIncludedTerm_;
+    public cc.litstar.rpc.ClientSubmitRequest buildPartial() {
+      cc.litstar.rpc.ClientSubmitRequest result = new cc.litstar.rpc.ClientSubmitRequest(this);
+      result.op_ = op_;
       result.data_ = data_;
       onBuilt();
       return result;
@@ -459,27 +399,19 @@ public  final class InstallSnapshotArgs extends
       return (Builder) super.addRepeatedField(field, value);
     }
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof cc.litstar.rpc.InstallSnapshotArgs) {
-        return mergeFrom((cc.litstar.rpc.InstallSnapshotArgs)other);
+      if (other instanceof cc.litstar.rpc.ClientSubmitRequest) {
+        return mergeFrom((cc.litstar.rpc.ClientSubmitRequest)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(cc.litstar.rpc.InstallSnapshotArgs other) {
-      if (other == cc.litstar.rpc.InstallSnapshotArgs.getDefaultInstance()) return this;
-      if (other.getTerm() != 0) {
-        setTerm(other.getTerm());
-      }
-      if (other.getLeaderId() != 0) {
-        setLeaderId(other.getLeaderId());
-      }
-      if (other.getLastIncludedIndex() != 0) {
-        setLastIncludedIndex(other.getLastIncludedIndex());
-      }
-      if (other.getLastIncludedTerm() != 0) {
-        setLastIncludedTerm(other.getLastIncludedTerm());
+    public Builder mergeFrom(cc.litstar.rpc.ClientSubmitRequest other) {
+      if (other == cc.litstar.rpc.ClientSubmitRequest.getDefaultInstance()) return this;
+      if (!other.getOp().isEmpty()) {
+        op_ = other.op_;
+        onChanged();
       }
       if (!other.getData().isEmpty()) {
         data_ = other.data_;
@@ -497,11 +429,11 @@ public  final class InstallSnapshotArgs extends
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      cc.litstar.rpc.InstallSnapshotArgs parsedMessage = null;
+      cc.litstar.rpc.ClientSubmitRequest parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (cc.litstar.rpc.InstallSnapshotArgs) e.getUnfinishedMessage();
+        parsedMessage = (cc.litstar.rpc.ClientSubmitRequest) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -511,113 +443,78 @@ public  final class InstallSnapshotArgs extends
       return this;
     }
 
-    private int term_ ;
+    private java.lang.Object op_ = "";
     /**
-     * <code>optional int32 Term = 1;</code>
+     * <code>optional string Op = 1;</code>
      */
-    public int getTerm() {
-      return term_;
+    public java.lang.String getOp() {
+      java.lang.Object ref = op_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        op_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
     }
     /**
-     * <code>optional int32 Term = 1;</code>
+     * <code>optional string Op = 1;</code>
      */
-    public Builder setTerm(int value) {
-      
-      term_ = value;
+    public com.google.protobuf.ByteString
+        getOpBytes() {
+      java.lang.Object ref = op_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        op_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>optional string Op = 1;</code>
+     */
+    public Builder setOp(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      op_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>optional int32 Term = 1;</code>
+     * <code>optional string Op = 1;</code>
      */
-    public Builder clearTerm() {
+    public Builder clearOp() {
       
-      term_ = 0;
-      onChanged();
-      return this;
-    }
-
-    private int leaderId_ ;
-    /**
-     * <code>optional int32 LeaderId = 2;</code>
-     */
-    public int getLeaderId() {
-      return leaderId_;
-    }
-    /**
-     * <code>optional int32 LeaderId = 2;</code>
-     */
-    public Builder setLeaderId(int value) {
-      
-      leaderId_ = value;
+      op_ = getDefaultInstance().getOp();
       onChanged();
       return this;
     }
     /**
-     * <code>optional int32 LeaderId = 2;</code>
+     * <code>optional string Op = 1;</code>
      */
-    public Builder clearLeaderId() {
+    public Builder setOpBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
       
-      leaderId_ = 0;
-      onChanged();
-      return this;
-    }
-
-    private int lastIncludedIndex_ ;
-    /**
-     * <code>optional int32 LastIncludedIndex = 3;</code>
-     */
-    public int getLastIncludedIndex() {
-      return lastIncludedIndex_;
-    }
-    /**
-     * <code>optional int32 LastIncludedIndex = 3;</code>
-     */
-    public Builder setLastIncludedIndex(int value) {
-      
-      lastIncludedIndex_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>optional int32 LastIncludedIndex = 3;</code>
-     */
-    public Builder clearLastIncludedIndex() {
-      
-      lastIncludedIndex_ = 0;
-      onChanged();
-      return this;
-    }
-
-    private int lastIncludedTerm_ ;
-    /**
-     * <code>optional int32 LastIncludedTerm = 4;</code>
-     */
-    public int getLastIncludedTerm() {
-      return lastIncludedTerm_;
-    }
-    /**
-     * <code>optional int32 LastIncludedTerm = 4;</code>
-     */
-    public Builder setLastIncludedTerm(int value) {
-      
-      lastIncludedTerm_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>optional int32 LastIncludedTerm = 4;</code>
-     */
-    public Builder clearLastIncludedTerm() {
-      
-      lastIncludedTerm_ = 0;
+      op_ = value;
       onChanged();
       return this;
     }
 
     private java.lang.Object data_ = "";
     /**
-     * <code>optional string Data = 5;</code>
+     * <code>optional string Data = 2;</code>
      */
     public java.lang.String getData() {
       java.lang.Object ref = data_;
@@ -632,7 +529,7 @@ public  final class InstallSnapshotArgs extends
       }
     }
     /**
-     * <code>optional string Data = 5;</code>
+     * <code>optional string Data = 2;</code>
      */
     public com.google.protobuf.ByteString
         getDataBytes() {
@@ -648,7 +545,7 @@ public  final class InstallSnapshotArgs extends
       }
     }
     /**
-     * <code>optional string Data = 5;</code>
+     * <code>optional string Data = 2;</code>
      */
     public Builder setData(
         java.lang.String value) {
@@ -661,7 +558,7 @@ public  final class InstallSnapshotArgs extends
       return this;
     }
     /**
-     * <code>optional string Data = 5;</code>
+     * <code>optional string Data = 2;</code>
      */
     public Builder clearData() {
       
@@ -670,7 +567,7 @@ public  final class InstallSnapshotArgs extends
       return this;
     }
     /**
-     * <code>optional string Data = 5;</code>
+     * <code>optional string Data = 2;</code>
      */
     public Builder setDataBytes(
         com.google.protobuf.ByteString value) {
@@ -694,39 +591,39 @@ public  final class InstallSnapshotArgs extends
     }
 
 
-    // @@protoc_insertion_point(builder_scope:InstallSnapshotArgs)
+    // @@protoc_insertion_point(builder_scope:ClientSubmitRequest)
   }
 
-  // @@protoc_insertion_point(class_scope:InstallSnapshotArgs)
-  private static final cc.litstar.rpc.InstallSnapshotArgs DEFAULT_INSTANCE;
+  // @@protoc_insertion_point(class_scope:ClientSubmitRequest)
+  private static final cc.litstar.rpc.ClientSubmitRequest DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new cc.litstar.rpc.InstallSnapshotArgs();
+    DEFAULT_INSTANCE = new cc.litstar.rpc.ClientSubmitRequest();
   }
 
-  public static cc.litstar.rpc.InstallSnapshotArgs getDefaultInstance() {
+  public static cc.litstar.rpc.ClientSubmitRequest getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
-  private static final com.google.protobuf.Parser<InstallSnapshotArgs>
-      PARSER = new com.google.protobuf.AbstractParser<InstallSnapshotArgs>() {
-    public InstallSnapshotArgs parsePartialFrom(
+  private static final com.google.protobuf.Parser<ClientSubmitRequest>
+      PARSER = new com.google.protobuf.AbstractParser<ClientSubmitRequest>() {
+    public ClientSubmitRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-        return new InstallSnapshotArgs(input, extensionRegistry);
+        return new ClientSubmitRequest(input, extensionRegistry);
     }
   };
 
-  public static com.google.protobuf.Parser<InstallSnapshotArgs> parser() {
+  public static com.google.protobuf.Parser<ClientSubmitRequest> parser() {
     return PARSER;
   }
 
   @java.lang.Override
-  public com.google.protobuf.Parser<InstallSnapshotArgs> getParserForType() {
+  public com.google.protobuf.Parser<ClientSubmitRequest> getParserForType() {
     return PARSER;
   }
 
-  public cc.litstar.rpc.InstallSnapshotArgs getDefaultInstanceForType() {
+  public cc.litstar.rpc.ClientSubmitRequest getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

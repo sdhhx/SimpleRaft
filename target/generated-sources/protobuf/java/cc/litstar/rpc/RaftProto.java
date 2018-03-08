@@ -49,6 +49,16 @@ public final class RaftProto {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_InstallSnapshotReply_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_ClientSubmitRequest_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_ClientSubmitRequest_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_ClientSubmitReply_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_ClientSubmitReply_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -72,15 +82,18 @@ public final class RaftProto {
       "\n\007Success\030\002 \001(\010\022\021\n\tNextIndex\030\003 \001(\005\"x\n\023In" +
       "stallSnapshotArgs\022\014\n\004Term\030\001 \001(\005\022\020\n\010Leade" +
       "rId\030\002 \001(\005\022\031\n\021LastIncludedIndex\030\003 \001(\005\022\030\n\020" +
-      "LastIncludedTerm\030\004 \001(\005\022\014\n\004data\030\005 \001(\t\"$\n\024" +
-      "InstallSnapshotReply\022\014\n\004Term\030\001 \001(\0052\317\001\n\004R" +
-      "aft\022;\n\022RaftRequestVoteRpc\022\020.RequestVoteA" +
-      "rgs\032\021.RequestVoteReply\"\000\022A\n\024RaftAppendEn" +
-      "triesRpc\022\022.AppendEntriesArgs\032\023.AppendEnt" +
-      "riesReply\"\000\022G\n\026RaftInstallSnapshotRpc\022\024.",
-      "InstallSnapshotArgs\032\025.InstallSnapshotRep" +
-      "ly\"\000B\035\n\016cc.litstar.rpcB\tRaftProtoP\001b\006pro" +
-      "to3"
+      "LastIncludedTerm\030\004 \001(\005\022\014\n\004Data\030\005 \001(\t\"$\n\024" +
+      "InstallSnapshotReply\022\014\n\004Term\030\001 \001(\005\"/\n\023Cl" +
+      "ientSubmitRequest\022\n\n\002Op\030\001 \001(\t\022\014\n\004Data\030\002 " +
+      "\001(\t\"&\n\021ClientSubmitReply\022\021\n\tCanSubmit\030\001 " +
+      "\001(\0102\222\002\n\004Raft\022;\n\022RaftRequestVoteRpc\022\020.Req" +
+      "uestVoteArgs\032\021.RequestVoteReply\"\000\022A\n\024Raf",
+      "tAppendEntriesRpc\022\022.AppendEntriesArgs\032\023." +
+      "AppendEntriesReply\"\000\022G\n\026RaftInstallSnaps" +
+      "hotRpc\022\024.InstallSnapshotArgs\032\025.InstallSn" +
+      "apshotReply\"\000\022A\n\023RaftClientSubmitRpc\022\024.C" +
+      "lientSubmitRequest\032\022.ClientSubmitReply\"\000" +
+      "B\035\n\016cc.litstar.rpcB\tRaftProtoP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -136,6 +149,18 @@ public final class RaftProto {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_InstallSnapshotReply_descriptor,
         new java.lang.String[] { "Term", });
+    internal_static_ClientSubmitRequest_descriptor =
+      getDescriptor().getMessageTypes().get(6);
+    internal_static_ClientSubmitRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_ClientSubmitRequest_descriptor,
+        new java.lang.String[] { "Op", "Data", });
+    internal_static_ClientSubmitReply_descriptor =
+      getDescriptor().getMessageTypes().get(7);
+    internal_static_ClientSubmitReply_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_ClientSubmitReply_descriptor,
+        new java.lang.String[] { "CanSubmit", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

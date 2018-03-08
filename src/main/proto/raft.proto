@@ -10,6 +10,7 @@ service Raft {
 	rpc RaftRequestVoteRpc (RequestVoteArgs) returns (RequestVoteReply) {};
 	rpc RaftAppendEntriesRpc (AppendEntriesArgs) returns (AppendEntriesReply) {};
 	rpc RaftInstallSnapshotRpc (InstallSnapshotArgs) returns (InstallSnapshotReply) {};
+	rpc RaftClientSubmitRpc (ClientSubmitRequest) returns (ClientSubmitReply) {};
 }
 
 // 请求投票RPC参数
@@ -56,10 +57,22 @@ message InstallSnapshotArgs {
 	int32 LeaderId = 2;
 	int32 LastIncludedIndex = 3;
 	int32 LastIncludedTerm = 4;
-	string data = 5;
+	string Data = 5;
 }
 
 // 安装快照RPC返回值
 message InstallSnapshotReply {
 	int32 Term = 1;
+}
+
+// 用户提交一个操作
+// 每次操作轮询节点直到可以操作
+message ClientSubmitRequest {
+	string Op = 1;
+	string Data = 2;
+}
+
+// 返回操作是否能被提交(只能提交给Leader)
+message ClientSubmitReply {
+	bool CanSubmit = 1;
 }

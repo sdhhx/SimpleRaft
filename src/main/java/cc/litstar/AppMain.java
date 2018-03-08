@@ -8,8 +8,7 @@ import cc.litstar.core.Raft;
 import cc.litstar.sm.StateMachine;
 
 /**
- * Hello world!
- *
+ * Test
  */
 public class AppMain {
 	
@@ -25,7 +24,7 @@ public class AppMain {
     public static void main(String[] args) throws IOException {
         Raft raft = new Raft();
         Options options = new Options();
-        options.setOption("HbInterval", 500);
+        options.setOption("HbInterval", 1000);
         raft.setOptions(options);
         raft.setStateMachine(new KeyValueMachine());
         raft.start();

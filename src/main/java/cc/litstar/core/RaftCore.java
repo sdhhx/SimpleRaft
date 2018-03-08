@@ -24,6 +24,8 @@ import cc.litstar.rpc.AppendEntriesArgs;
 import cc.litstar.rpc.AppendEntriesArgs.LogEntry;
 import cc.litstar.sm.StateMachine;
 import cc.litstar.rpc.AppendEntriesReply;
+import cc.litstar.rpc.ClientSubmitReply;
+import cc.litstar.rpc.ClientSubmitRequest;
 import cc.litstar.rpc.RaftGrpc;
 import cc.litstar.rpc.RequestVoteArgs;
 import cc.litstar.rpc.RequestVoteReply;
@@ -186,7 +188,8 @@ public class RaftCore {
 						logger.info(status.toString());
 						switch (status) {
 						case FOLLOWER:
-							msg = stateChannel.poll(getRandomTime((int)(0.8 * hbInterval), (int)(1.2 * hbInterval)),
+							//随机超时时间
+							msg = stateChannel.poll(getRandomTime(2 * hbInterval, 4 * hbInterval),
 									TimeUnit.MILLISECONDS);
 							logger.info("Follower: " + msg);
 							//超时开始重新选举
@@ -216,7 +219,7 @@ public class RaftCore {
 							// 1. 自己赢得了选举
 							// 2. 其他服务器赢得了选举
 							// 3. 一段时间后没有选出Leader
-							stateChannel.clear();//切换后收到附加日志
+							//stateChannel.clear();//切换后收到附加日志(必定没有)
 							new Thread(() -> broadcastRequestVote()).start();
 							logger.info("Candidate: Broadcast vote request");
 							msg = stateChannel.poll(getRandomTime(3 * hbInterval, 5 * hbInterval),
@@ -370,7 +373,7 @@ public class RaftCore {
 				}
 				//附加日志RPC成功
 				if(reply.getSuccess()) {
-					if(log.size() > 0) {
+					if(request.getEntriesCount() > 0) {
 						//nextIndex的协商(心跳没发包与-1越界)
 						int next = request.getEntries(request.getEntriesCount() - 1).getLogIndex() + 1;
 						nextIndex.put(server, next);
@@ -641,6 +644,25 @@ public class RaftCore {
 				responseObserver.onCompleted();
 				return;
 			}
+		}
+		
+		@Override
+		public void raftClientSubmitRpc(ClientSubmitRequest request, StreamObserver<ClientSubmitReply> responseObserver) {
+			int index = -1;
+			int term = currentTerm;
+			boolean isLeader = (status == RaftStatus.LEADER);
+			if(isLeader) {
+				//Index递增
+				index = getLastIndex() + 1;
+				log.add(new LogEntryObj(index, term, request.getOp(), request.getData()));
+			}
+			ClientSubmitReply.Builder replyBuilder = ClientSubmitReply.newBuilder();
+			ClientSubmitReply reply = null;
+			replyBuilder.setCanSubmit(isLeader);
+			reply = replyBuilder.build();
+			responseObserver.onNext(reply);
+			responseObserver.onCompleted();
+			return;
 		}
 	}
 }
