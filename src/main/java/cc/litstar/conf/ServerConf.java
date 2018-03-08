@@ -3,15 +3,13 @@ package cc.litstar.conf;
 import java.util.List;
 import cc.litstar.node.RaftNode;
 
-public class RaftConfig {
+public class ServerConf {
 	private RaftNode localNode;
-	private int HbInterval;
 	private List<RaftNode> remoteNode;
 	
-	public RaftConfig(RaftNode localNode, int hbInterval, List<RaftNode> remoteNode) {
+	public ServerConf(RaftNode localNode, List<RaftNode> remoteNode) {
 		super();
 		this.localNode = localNode;
-		HbInterval = hbInterval;
 		this.remoteNode = remoteNode;
 	}
 	public RaftNode getLocalNode() {
@@ -19,12 +17,6 @@ public class RaftConfig {
 	}
 	public void setLocalNode(RaftNode localNode) {
 		this.localNode = localNode;
-	}
-	public int getHbInterval() {
-		return HbInterval;
-	}
-	public void setHbInterval(int hbInterval) {
-		HbInterval = hbInterval;
 	}
 	public List<RaftNode> getRemoteNode() {
 		return remoteNode;
@@ -34,6 +26,7 @@ public class RaftConfig {
 	}
 	@Override
 	public String toString() {
-		return "RaftConfig [localNode=" + localNode + ", HbInterval=" + HbInterval + ", remoteNode=" + remoteNode + "]";
+		return "ServerConf [localNode=" + localNode + ", remoteNode=" + remoteNode + "]";
 	}
+
 }

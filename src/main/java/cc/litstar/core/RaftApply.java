@@ -3,8 +3,16 @@ package cc.litstar.core;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import cc.litstar.beans.ApplyMsg;
+import cc.litstar.sm.StateMachine;
 
 public class RaftApply implements Runnable {
+	//状态机
+	private StateMachine stateMachine;
+	
+	public RaftApply(StateMachine stateMachine) {
+		super();
+		this.stateMachine = stateMachine;
+	}
 
 	@Override
 	public void run() {
@@ -14,7 +22,7 @@ public class RaftApply implements Runnable {
 				Object applyMsg = applyMQ.take();
 				if(applyMsg instanceof ApplyMsg) {
 					ApplyMsg msg = (ApplyMsg)applyMsg;
-					System.out.println("Op:" + msg.getOp() + " Data:" + msg.getData());
+					stateMachine.execute(msg);
 				}
 			}
 		} catch (InterruptedException e) {

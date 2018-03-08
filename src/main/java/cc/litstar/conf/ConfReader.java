@@ -5,27 +5,26 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-public class ConfManager {
+public class ConfReader {
 	private String confPath = "conf/Raft.conf";
-	private final static Logger logger = LoggerFactory.getLogger(ConfManager.class);
+	private final static Logger logger = LoggerFactory.getLogger(ConfReader.class);
 	
-	public static RaftConfig config = null;
+	public static ServerConf config = null;
 	
-	public static RaftConfig getConfig() {
+	public static ServerConf getConfig() {
 		if(config == null) {
-			new ConfManager().readConf();
+			new ConfReader().readConf();
 		}
 		return config;
 	}
 	
-	private ConfManager() {
+	private ConfReader() {
 		super();
 	}
 	
@@ -46,17 +45,19 @@ public class ConfManager {
 		
 		json = json.replaceAll("\\s+", "");
 		Gson gson = new Gson();  
-		Type type = new TypeToken<RaftConfig>(){}.getType();  
+		Type type = new TypeToken<ServerConf>(){}.getType();  
 		try{
 			//过滤非法字符
 			config = gson.fromJson(json, type);  
 		}catch (Exception e) {
-			e.printStackTrace();
+			logger.info("Config file is invaild");
+			//e.printStackTrace();
 			System.exit(0);
 		}
 	}
 	
 	public static void main(String[] args) {
-		ConfManager.getConfig();
+		ServerConf conf = ConfReader.getConfig();
+		System.out.println(conf);
 	}
 }

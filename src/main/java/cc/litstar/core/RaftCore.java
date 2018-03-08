@@ -16,11 +16,13 @@ import org.slf4j.LoggerFactory;
 
 import cc.litstar.beans.ApplyMsg;
 import cc.litstar.beans.LogEntryObj;
-import cc.litstar.conf.ConfManager;
-import cc.litstar.conf.RaftConfig;
+import cc.litstar.conf.ConfReader;
+import cc.litstar.conf.Options;
+import cc.litstar.conf.ServerConf;
 import cc.litstar.node.RaftNode;
 import cc.litstar.rpc.AppendEntriesArgs;
 import cc.litstar.rpc.AppendEntriesArgs.LogEntry;
+import cc.litstar.sm.StateMachine;
 import cc.litstar.rpc.AppendEntriesReply;
 import cc.litstar.rpc.RaftGrpc;
 import cc.litstar.rpc.RequestVoteArgs;
@@ -37,7 +39,7 @@ public class RaftCore {
 	//当前编号
 	private int id;
 	//当前状态
-	private RaftStatus status;
+	private volatile RaftStatus status;
 	//投票数
 	private volatile int voteCount;
 	//服务器最后一次知道的任期号
@@ -67,8 +69,15 @@ public class RaftCore {
 	//对于每一个服务器，已经复制给他的日志的最高索引值
 	private volatile Map<Integer, Integer> matchIndex;
 	
+	//状态机相关
+	private volatile RaftApply applyHandler;
+	private volatile StateMachine sm;
+	
 	//Config
-	private RaftConfig config;
+	private ServerConf config;
+	//Options
+	private Options options;
+	
 	//线程池，RPC调用线程
 	private volatile ExecutorService rpcCallPool;
 	
@@ -80,6 +89,16 @@ public class RaftCore {
 	//返回当前任期
 	public int getCurrentTerm() {
 		return currentTerm;
+	}
+	
+	//设置状态机
+	public void setStateMachine(StateMachine sm) {
+		this.sm = sm;
+	}
+	
+	//设置Option
+	public void setOptions(Options options) {
+		this.options = options;
 	}
 	
 	//是否是Leader
@@ -102,14 +121,24 @@ public class RaftCore {
 		return rand.nextInt(end - start) + start;
 	}
 	
+	//参数检验
+	public boolean optionCheck() {
+		if(options.getIntOption("HbInterval") < 0) {
+			logger.info("HbInterval is not setted or wrong value");
+			return false;
+		}
+		return true;
+	}
+	
 	//初始化操作
 	public void init() {
-		this.config = ConfManager.getConfig();
+		this.config = ConfReader.getConfig();
 		RaftNode curNode = config.getLocalNode();
 		List<RaftNode> remoteList = config.getRemoteNode();
 		
 		this.id = curNode.getId();
-		this.hbInterval = config.getHbInterval();
+		//this.hbInterval = config.getHbInterval();
+		this.hbInterval = options.getIntOption("HbInterval");
 		this.handler = new RaftCallHandler();
 		this.server = new RaftServer(curNode.getPort(), handler);
 		
@@ -132,6 +161,12 @@ public class RaftCore {
 		this.commitChannel = new LinkedBlockingQueue<>();
 		this.applyChannel = RaftApplyMQ.getMQ();
 		this.rpcCallPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+		
+		//状态机
+		this.sm = sm;
+		this.applyHandler = new RaftApply(this.sm);
+		new Thread(this.applyHandler).start();
+		logger.info("Initializing raft successful.");
 	}
 	
 	
@@ -148,20 +183,26 @@ public class RaftCore {
 				try {
 					String msg = null;
 					while(!Thread.currentThread().isInterrupted()) {
+						logger.info(status.toString());
 						switch (status) {
 						case FOLLOWER:
-							msg = stateChannel.poll(getRandomTime(3 * hbInterval, 5 * hbInterval),
+							msg = stateChannel.poll(getRandomTime((int)(0.8 * hbInterval), (int)(1.2 * hbInterval)),
 									TimeUnit.MILLISECONDS);
+							logger.info("Follower: " + msg);
 							//超时开始重新选举
 							if(msg == null) {
 								status = RaftStatus.CANDIDATE;
+								logger.info("Follower: Heartheat timed out, switch to candidate");
 							} else if(msg.equals("HeartBeat")) { //收到心跳
-							} else if(msg.equals("GrantVote")) { //已投票				
+								logger.info("Follower: Heartbeat received");
+							} else if(msg.equals("GrantVote")) { //已投票
+								logger.info("Follower: Vote to a server successful");
 							} else {}
 							break;
 						case LEADER:
-							//广播附加日志条目
+							//广播附加日志条目，Sleep控制速率
 							broadcastAppendEntries();
+							logger.info("Leader: Broadcast append log entries");
 							Thread.sleep(hbInterval);
 							break;
 						case CANDIDATE:
@@ -175,29 +216,34 @@ public class RaftCore {
 							// 1. 自己赢得了选举
 							// 2. 其他服务器赢得了选举
 							// 3. 一段时间后没有选出Leader
-							stateChannel.clear();//冗余元素清除
+							stateChannel.clear();//切换后收到附加日志
 							new Thread(() -> broadcastRequestVote()).start();
+							logger.info("Candidate: Broadcast vote request");
 							msg = stateChannel.poll(getRandomTime(3 * hbInterval, 5 * hbInterval),
 									TimeUnit.MILLISECONDS);
+							logger.info("Candidate: " + msg);
 							//超时开始重新选举
 							if(msg == null) {
 								//选票瓜分没有选出Leader，超时后重新发生选主
+								logger.info("Candidate: Vote timed out, re-vote");
 							} else if(msg.equals("HeartBeat")) {
 								//已有节点被选为主
 								status = RaftStatus.FOLLOWER;
+								logger.info("Candidate: Leader was voted, switch to leader");
 							} else if(msg.equals("SetLeader")) {	
 								synchronized (RaftCore.this) {
 									//状态切换到LEADER
 									status = RaftStatus.LEADER;
 									//重建Leader数据结构
+									logger.info("Candidate: Win this vote, switch to leader");
 									nextIndex = new HashMap<>();
 									matchIndex = new HashMap<>();
 									for(int server : peers.keySet()) {
-										//设置初值，算法调整
+										//设置初值，借助若干次附加日志RPC调整
 										nextIndex.put(server, RaftCore.this.getLastIndex() + 1);
 										matchIndex.put(server, 0);
 									}
-									stateChannel.clear();//
+									stateChannel.clear();
 								}
 							} else {}
 							break;
@@ -221,10 +267,12 @@ public class RaftCore {
 						if(!msg.equals("Commit")) {
 							continue;
 						}
+						logger.info("Log entry commited, apply them");
 						int baseIndex = log.get(0).getLogIndex();
+						//如果commitIndex > lastApplied，那么就 lastApplied 加一，并把log[lastApplied]应用到状态机中(5.3 节)
 						for(int i = lastApplied + 1; i <= commitIndex; i++) {
 							LogEntryObj logety = log.get(i - baseIndex);
-							ApplyMsg applyMsg = new ApplyMsg(i, logety.getOp(), logety.getData(), false, null);
+							ApplyMsg applyMsg = new ApplyMsg(i, logety.getOp(), logety.getData());
 							applyChannel.add(applyMsg);
 							lastApplied = i;
 						}
@@ -242,9 +290,8 @@ public class RaftCore {
 	
 	/**
 	 * 从客户端收到命令的处理流程
-	 * 或许需要客户端RPC?
-	 * 
-	 * 改================
+	 * 需要客户端RPC提交日志
+	 * 加个RPC可解
 	 */
 	public synchronized boolean append(String op, String data) {
 		int index = -1;
@@ -269,7 +316,7 @@ public class RaftCore {
 			RequestVoteReply reply = rpc.requestVoteCall(request);
 			if(reply != null) {
 				int term = currentTerm;
-				//候选态不做处理
+				//CANDIDATE态不做处理
 				if (status != RaftStatus.CANDIDATE) {
 					return true;
 				}
@@ -282,7 +329,6 @@ public class RaftCore {
 					currentTerm = reply.getTerm();
 					status = RaftStatus.FOLLOWER;
 					voteFor = -1;
-					//persist()
 				}
 				//收到了来自Follower的选票
 				if(reply.getVoteGranted()) {
@@ -317,7 +363,7 @@ public class RaftCore {
 				}
 				//Follower发送了更新的任期号，则将自己降为Follower
 				if(reply.getTerm() > currentTerm) {
-					currentTerm = reply.getTerm();//?
+					currentTerm = reply.getTerm();
 					status = RaftStatus.FOLLOWER;
 					voteFor = -1;
 					return true;
@@ -325,6 +371,7 @@ public class RaftCore {
 				//附加日志RPC成功
 				if(reply.getSuccess()) {
 					if(log.size() > 0) {
+						//nextIndex的协商(心跳没发包与-1越界)
 						int next = request.getEntries(request.getEntriesCount() - 1).getLogIndex() + 1;
 						nextIndex.put(server, next);
 						matchIndex.put(server, nextIndex.get(server) - 1);
@@ -344,6 +391,7 @@ public class RaftCore {
 	public void broadcastRequestVote() {
 		RequestVoteArgs.Builder requsetBuilder = RequestVoteArgs.newBuilder();
 		RequestVoteArgs request = null;
+		//组织消息并发送
 		synchronized (RaftCore.this) {
 			requsetBuilder.setTerm(currentTerm);
 			requsetBuilder.setCandidateId(id);
@@ -364,14 +412,13 @@ public class RaftCore {
 	 */
 	public void broadcastAppendEntries() {
 		synchronized (RaftCore.this) {
-			//最大的已经被提交的日志集
 			int N = commitIndex;
-			//最后一条日志的索引号
 			int last = RaftCore.this.getLastIndex();
 			//第一条日志的索引号
 			int baseIndex = log.get(0).getLogIndex();
-			//如果存在一个N满足N>commitIndex， 且大多matchIndex[i] >= N, 并且日志term == currentTerm
-			//将commitIndex设置为N(已经被提交了的日志)
+			// 如果存在一个满足N > commitIndex的 N，并且大多数的 matchIndex[i] ≥ N成立，并且log[N].term == currentTerm成立，
+			// 那么令 commitIndex 等于这个 N(论文 5.3 和 5.4 节)
+			// 前者是一半节点匹配后才能提交，后者是防止非本此term的日志覆盖(5.4.2)
 			for(int i = commitIndex + 1; i <= last; i++) {
 				int num = 1;
 				for(int j : peers.keySet()) {
@@ -390,6 +437,7 @@ public class RaftCore {
 				commitIndex = N;
 				commitChannel.add(new String("Commit"));
 			}
+			//Leader组织日志项，借助RPC发送日志
 			for(int i : peers.keySet()) {
 				if(i != id && status == RaftStatus.LEADER) {
 					//需要发送的日志不是第一条日志
@@ -463,7 +511,7 @@ public class RaftCore {
 				RequestVoteReply.Builder replyBuilder = RequestVoteReply.newBuilder();
 				RequestVoteReply reply = null;
 				replyBuilder.setVoteGranted(false);
-				//候选者Term比当前Term旧，不投票
+				//如果term < currentTerm返回 false(5.2 节)
 				if(request.getTerm() < currentTerm) {
 					replyBuilder.setTerm(currentTerm);
 					reply = replyBuilder.build();
@@ -471,7 +519,7 @@ public class RaftCore {
 					responseObserver.onCompleted();
 					return;
 				}
-				//收到更新的Term，立刻转换为Follower
+				//收到更加新的Term，立刻转换为Follower
 				if(request.getTerm() > currentTerm) {
 					currentTerm = request.getTerm();
 					status = RaftStatus.FOLLOWER;
@@ -485,19 +533,17 @@ public class RaftCore {
 				int index = RaftCore.this.getLastIndex();
 				boolean uptoDate = false;
 				// 如果VoteFor为null或者为发起投票者的ID，则投票(没有投票则可以投票)
-				// 过期日志的两种情况：
-				//	   1.如果日志的最后一条是不同的日志条目，则日期更新的日志将更新
-				//     2.如果任期号相同，则最优一条日志索引大的日志更新
+				// 为Term更大，或者Term相同但索引更大的日志投票
 				if(request.getLastLogIndex() > term) {
 					uptoDate = true;
 				}
 				if(request.getLastLogTerm() == term && request.getLastLogIndex() >= index) {
 					uptoDate = true;
 				}
-				//一人一票，先到先得
+				//一人一票，先到先得(投过票则切换到Follower?不太对还导致队列直接判空)
 				if(uptoDate && (voteFor == -1 || voteFor == request.getCandidateId())) {
-					stateChannel.add(new String("GrantVote"));
-					status = RaftStatus.FOLLOWER;
+					//stateChannel.add(new String("GrantVote"));
+					//status = RaftStatus.FOLLOWER;
 					replyBuilder.setVoteGranted(true);
 					voteFor = request.getCandidateId();
 				}
@@ -514,7 +560,7 @@ public class RaftCore {
 				AppendEntriesReply.Builder replyBuilder = AppendEntriesReply.newBuilder();
 				AppendEntriesReply reply = null;
 				replyBuilder.setSuccess(false);
-				//由任期号更小的Leader发来的日志，回复当前任期号并标记失败
+				//如果 term < currentTerm 就返回 false (5.1 节)
 				if(request.getTerm() < currentTerm) {
 					replyBuilder.setTerm(currentTerm);
 					replyBuilder.setNextIndex(RaftCore.this.getLastIndex() + 1);
@@ -532,7 +578,8 @@ public class RaftCore {
 				}
 				//参数里的Term，最新Term编号
 				replyBuilder.setTerm(request.getTerm());
-				//最后一条日志数量小于PrevLogIndex，则需要补充的日志不足
+				
+				//日志太新，不能出现空洞
 				if(request.getPrevLogIndex() > RaftCore.this.getLastIndex()) {
 					replyBuilder.setNextIndex(RaftCore.this.getLastIndex() + 1);
 					reply = replyBuilder.build();
@@ -540,20 +587,15 @@ public class RaftCore {
 					responseObserver.onCompleted();
 					return;
 				}
+				
 				//第一条日志的索引
 				int baseIndex = log.get(0).getLogIndex();
-				//如果Leader和Follower的日志不一致，则需要协商
-				
-				//如果日志在 prevLogIndex 位置处的日志条目的任期号和 prevLogTerm不匹配，则返回 false 
-				//如果已经存在的日志条目和新的产生冲突（索引值相同但是任期号不同），删除这一条和之后所有的
 				if(request.getPrevLogIndex() > baseIndex) {
-					int term = log.get(request.getPrevLogIndex() - baseIndex).getLogTerm();
-					//任期号与实际任期号不一致(数据不一致)
-					if(request.getPrevLogTerm() != term) {
+					int logTerm = log.get(request.getPrevLogIndex() - baseIndex).getLogTerm();
+					//如果日志在 prevLogIndex 位置处的日志条目的任期号和 prevLogTerm 不匹配，则返回 false(5.3 节)
+					if(request.getPrevLogTerm() != logTerm) {
 						for(int i = request.getPrevLogIndex() - 1; i >= baseIndex; i--) {
-							//已经存在的日志条目索引值相同但任期号不同
-							//每次找到第一个任期号不一致项，或者找不到
-							if(log.get(i - baseIndex).getLogTerm() != term) {
+							if(log.get(i - baseIndex).getLogTerm() != logTerm) {
 								replyBuilder.setNextIndex(i + 1);
 								break;
 							}
@@ -565,10 +607,10 @@ public class RaftCore {
 					}
 				}
 				
-				if(request.getPrevLogIndex() > baseIndex) {
-					//不做处理
+				if(request.getPrevLogIndex() < baseIndex) {
 				} else {
-					//日志不冲突，追加日志
+					//如果已经存在的日志条目和新的产生冲突(索引值相同但是任期号不同)，删除这一条和之后所有的 (5.3 节)
+					//附加任何在已有的日志中不存在的条目
 					for(int i = request.getPrevLogIndex() + 1 - baseIndex; i < log.size(); i++) {
 						log.remove(i);
 					}
@@ -582,8 +624,8 @@ public class RaftCore {
 					replyBuilder.setSuccess(true);
 					replyBuilder.setNextIndex(RaftCore.this.getLastIndex() + 1);
 				}
-				//如果leaderCommit > commitIndex，则设置commitIndex为LeaderCommit与最后一个新条目的最小值
-				//所以Leader提交日志后，在Follower收到下一个附加日志RPC时(心跳/附加日志RPC)，Follower更新自己
+				
+				//如果 leaderCommit > commitIndex，令 commitIndex 等于 leaderCommit 和 新日志条目索引值中较小的一个
 				if(request.getLeaderCommit() > commitIndex) {
 					int last = RaftCore.this.getLastIndex();
 					if(request.getLeaderCommit() > last) {
@@ -591,6 +633,7 @@ public class RaftCore {
 					} else {
 						commitIndex = request.getLeaderCommit();
 					}
+					//日志应用条件
 					commitChannel.add(new String("Commit"));
 				}
 				reply = replyBuilder.build();
