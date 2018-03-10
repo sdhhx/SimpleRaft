@@ -46,7 +46,7 @@
     </contextListener>
 
     <!-- root级别   DEBUG -->
-    <root level="info">
+    <root level="warn">
     	<appender-ref ref="STDOUT" />
     </root>
 </configuration>

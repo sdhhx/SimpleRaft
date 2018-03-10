@@ -7,8 +7,6 @@ import cc.litstar.rpc.RaftGrpc;
 import cc.litstar.rpc.RequestVoteArgs;
 import cc.litstar.rpc.RequestVoteReply;
 import cc.litstar.rpc.AppendEntriesReply;
-import cc.litstar.rpc.ClientSubmitReply;
-import cc.litstar.rpc.ClientSubmitRequest;
 import cc.litstar.rpc.InstallSnapshotArgs;
 import cc.litstar.rpc.InstallSnapshotReply;
 import io.grpc.ManagedChannel;
@@ -66,16 +64,5 @@ public class RaftCall {
 			return null;
 		}
 	}
-	
-	public synchronized ClientSubmitReply clientSubmitCall(ClientSubmitRequest request) {
-		try {
-			ClientSubmitReply reply = blockingStub.withDeadlineAfter(1, TimeUnit.SECONDS)
-												  .raftClientSubmitRpc(request);
-			return reply;
-		} catch (Exception e) {
-			//Status status = Status.fromThrowable(e);
-	        //status.asException().printStackTrace();
-			return null;
-		}
-	}
+
 }

@@ -14,8 +14,6 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import cc.litstar.beans.ApplyMsg;
-import cc.litstar.beans.LogEntryObj;
 import cc.litstar.conf.ConfReader;
 import cc.litstar.conf.Options;
 import cc.litstar.conf.ServerConf;
@@ -58,7 +56,8 @@ public class RaftCore {
 	//心跳时间间隔
 	private int hbInterval;
 	
-	//状态Channel(put,offer添加考虑队列是否满)
+	//状态Channel，超时控制
+	//Follower态是否心跳超时，以及Candidate态处于自己成为Leader、其他节点成为Leader(收到心跳)或者超时重选
 	private LinkedBlockingQueue<String> stateChannel;
 	//提交Channel
 	private LinkedBlockingQueue<String> commitChannel;
@@ -134,7 +133,7 @@ public class RaftCore {
 	
 	//初始化操作
 	public void init() {
-		this.config = ConfReader.getConfig();
+		this.config = ConfReader.getConf();
 		RaftNode curNode = config.getLocalNode();
 		List<RaftNode> remoteList = config.getRemoteNode();
 		
@@ -185,7 +184,6 @@ public class RaftCore {
 				try {
 					String msg = null;
 					while(!Thread.currentThread().isInterrupted()) {
-						logger.info(status.toString());
 						switch (status) {
 						case FOLLOWER:
 							//随机超时时间
@@ -198,8 +196,6 @@ public class RaftCore {
 								logger.info("Follower: Heartheat timed out, switch to candidate");
 							} else if(msg.equals("HeartBeat")) { //收到心跳
 								logger.info("Follower: Heartbeat received");
-							} else if(msg.equals("GrantVote")) { //已投票
-								logger.info("Follower: Vote to a server successful");
 							} else {}
 							break;
 						case LEADER:
@@ -443,7 +439,6 @@ public class RaftCore {
 			//Leader组织日志项，借助RPC发送日志
 			for(int i : peers.keySet()) {
 				if(i != id && status == RaftStatus.LEADER) {
-					//需要发送的日志不是第一条日志
 					if(true /*|| nextIndex.get(i) > baseIndex*/) {
 						AppendEntriesArgs.Builder requestBuilder = AppendEntriesArgs.newBuilder();
 						AppendEntriesArgs request = null;
@@ -466,6 +461,7 @@ public class RaftCore {
 															  setData(entryObj.getData()).
 															  build());								 
 						}
+						requestBuilder.addAllEntries(entries);
 						requestBuilder.setLeaderCommit(commitIndex);
 						request = requestBuilder.build();
 						rpcCallPool.execute(new AppendEntriesExecutor(i, request));
@@ -543,10 +539,8 @@ public class RaftCore {
 				if(request.getLastLogTerm() == term && request.getLastLogIndex() >= index) {
 					uptoDate = true;
 				}
-				//一人一票，先到先得(投过票则切换到Follower?不太对还导致队列直接判空)
+				//一人一票，先到先得
 				if(uptoDate && (voteFor == -1 || voteFor == request.getCandidateId())) {
-					//stateChannel.add(new String("GrantVote"));
-					//status = RaftStatus.FOLLOWER;
 					replyBuilder.setVoteGranted(true);
 					voteFor = request.getCandidateId();
 				}
@@ -610,8 +604,7 @@ public class RaftCore {
 					}
 				}
 				
-				if(request.getPrevLogIndex() < baseIndex) {
-				} else {
+				if(request.getPrevLogIndex() >= baseIndex) {
 					//如果已经存在的日志条目和新的产生冲突(索引值相同但是任期号不同)，删除这一条和之后所有的 (5.3 节)
 					//附加任何在已有的日志中不存在的条目
 					for(int i = request.getPrevLogIndex() + 1 - baseIndex; i < log.size(); i++) {
@@ -646,23 +639,26 @@ public class RaftCore {
 			}
 		}
 		
+		//其他节点发来请求信息，若为Leader则添加至Log，否则拒绝
 		@Override
 		public void raftClientSubmitRpc(ClientSubmitRequest request, StreamObserver<ClientSubmitReply> responseObserver) {
-			int index = -1;
-			int term = currentTerm;
-			boolean isLeader = (status == RaftStatus.LEADER);
-			if(isLeader) {
-				//Index递增
-				index = getLastIndex() + 1;
-				log.add(new LogEntryObj(index, term, request.getOp(), request.getData()));
+			synchronized (RaftCore.this) {
+				int index = -1;
+				int term = currentTerm;
+				boolean isLeader = (status == RaftStatus.LEADER);
+				if(isLeader) {
+					//Index递增
+					index = getLastIndex() + 1;
+					log.add(new LogEntryObj(index, term, request.getOp(), request.getData()));
+				}
+				ClientSubmitReply.Builder replyBuilder = ClientSubmitReply.newBuilder();
+				ClientSubmitReply reply = null;
+				replyBuilder.setCanSubmit(isLeader);
+				reply = replyBuilder.build();
+				responseObserver.onNext(reply);
+				responseObserver.onCompleted();
+				return;
 			}
-			ClientSubmitReply.Builder replyBuilder = ClientSubmitReply.newBuilder();
-			ClientSubmitReply reply = null;
-			replyBuilder.setCanSubmit(isLeader);
-			reply = replyBuilder.build();
-			responseObserver.onNext(reply);
-			responseObserver.onCompleted();
-			return;
 		}
 	}
 }

@@ -2,8 +2,6 @@ package cc.litstar.core;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import cc.litstar.beans.ApplyMsg;
-
 /**
  * @author HHX
  * 算法与提交解耦

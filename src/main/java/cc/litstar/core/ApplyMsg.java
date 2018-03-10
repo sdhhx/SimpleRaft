@@ -1,4 +1,4 @@
-package cc.litstar.beans;
+package cc.litstar.core;
 
 //Raft提交与具体应用的解耦
 public class ApplyMsg {
@@ -7,6 +7,7 @@ public class ApplyMsg {
 	//指令与数据
 	private String op;
 	private String data;
+	
 	public ApplyMsg(int index, String op, String data) {
 		super();
 		this.index = index;

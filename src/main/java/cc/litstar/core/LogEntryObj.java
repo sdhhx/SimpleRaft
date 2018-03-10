@@ -1,12 +1,11 @@
-package cc.litstar.beans;
+package cc.litstar.core;
 
 public class LogEntryObj {
 	//Log Index and Term
 	private int logIndex;
 	private int logTerm;
-	//操作
+	//Op and data
 	private String op;
-	//信息
 	private String data;
 	
 	public LogEntryObj() {

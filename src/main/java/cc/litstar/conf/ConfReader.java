@@ -17,7 +17,7 @@ public class ConfReader {
 	
 	public static ServerConf config = null;
 	
-	public static ServerConf getConfig() {
+	public static ServerConf getConf() {
 		if(config == null) {
 			new ConfReader().readConf();
 		}
@@ -55,9 +55,5 @@ public class ConfReader {
 			System.exit(0);
 		}
 	}
-	
-	public static void main(String[] args) {
-		ServerConf conf = ConfReader.getConfig();
-		System.out.println(conf);
-	}
+
 }

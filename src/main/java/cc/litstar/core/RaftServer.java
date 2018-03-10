@@ -2,6 +2,9 @@ package cc.litstar.core;
 
 import java.io.IOException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import cc.litstar.rpc.RaftGrpc.RaftImplBase;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -11,6 +14,8 @@ public class RaftServer {
 	private int port = 50050;
 	private Server server;
 	private RaftImplBase handler;
+	
+	private final static Logger logger = LoggerFactory.getLogger(RaftServer.class);
 	
 	public RaftServer(int port, RaftImplBase handler) {
 		this.port = port;
@@ -22,13 +27,13 @@ public class RaftServer {
 							  .addService(handler)
 							  .build()
 							  .start();
-		System.out.println("raft start...");
-		Runtime.getRuntime().addShutdownHook(new Thread(){
+		logger.info("raft start...");
+		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
-				System.err.println("*** shutting down gRPC server since JVM is shutting down");
+				logger.warn("*** shutting down gRPC server since JVM is shutting down");
 				RaftServer.this.stop();
-				System.err.println("*** server shut down");
+				logger.warn("*** server shut down");
 			}
 		});
 	}

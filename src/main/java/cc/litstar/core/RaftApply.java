@@ -2,7 +2,6 @@ package cc.litstar.core;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import cc.litstar.beans.ApplyMsg;
 import cc.litstar.sm.StateMachine;
 
 public class RaftApply implements Runnable {
