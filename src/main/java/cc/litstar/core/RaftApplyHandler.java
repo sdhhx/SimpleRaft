@@ -4,11 +4,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import cc.litstar.sm.StateMachine;
 
-public class RaftApply implements Runnable {
+public class RaftApplyHandler implements Runnable {
 	//状态机
 	private StateMachine stateMachine;
 	
-	public RaftApply(StateMachine stateMachine) {
+	public RaftApplyHandler(StateMachine stateMachine) {
 		super();
 		this.stateMachine = stateMachine;
 	}

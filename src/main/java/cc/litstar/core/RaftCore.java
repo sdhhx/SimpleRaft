@@ -71,7 +71,7 @@ public class RaftCore {
 	private volatile Map<Integer, Integer> matchIndex;
 	
 	//状态机相关
-	private volatile RaftApply applyHandler;
+	private volatile RaftApplyHandler applyHandler;
 	private volatile StateMachine sm;
 	
 	//Config
@@ -165,7 +165,7 @@ public class RaftCore {
 		
 		//状态机
 		this.sm = sm;
-		this.applyHandler = new RaftApply(this.sm);
+		this.applyHandler = new RaftApplyHandler(this.sm);
 		new Thread(this.applyHandler).start();
 		logger.info("Initializing raft successful.");
 	}
