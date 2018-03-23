@@ -39,45 +39,49 @@ Raft是一种管理日志的一致性算法。相比Paxos，其更加容易理�
 ```
 
 2. 编辑配置文件，填写本地节点与集群所有节点信息，配置文件位于目录conf/Raft.conf：    
- 
-		;配置文件格式：
-		{
-			"localNode" : {
+
+```
+	;配置文件格式：
+	{
+		"localNode" : {
+			"id" : 1,
+			"ipAddress" : "127.0.0.1",
+			"port" : 50051
+		},
+		"remoteNode" : [
+			{
 				"id" : 1,
 				"ipAddress" : "127.0.0.1",
 				"port" : 50051
 			},
-			"remoteNode" : [
-				{
-					"id" : 1,
-					"ipAddress" : "127.0.0.1",
-					"port" : 50051
-				},
-				{
-					"id" : 2,
-					"ipAddress" : "127.0.0.1",
-					"port" : 50052
-				},
-				{
-					"id" : 3,
-					"ipAddress" : "127.0.0.1",
-					"port" : 50053
-				},
-				{
-					"id" : 4,
-					"ipAddress" : "127.0.0.1",
-					"port" : 50054
-				},
-				{
-					"id" : 5,
-					"ipAddress" : "127.0.0.1",
-					"port" : 50055
-				}
-			]
-		}
+			{
+				"id" : 2,
+				"ipAddress" : "127.0.0.1",
+				"port" : 50052
+			},
+			{
+				"id" : 3,
+				"ipAddress" : "127.0.0.1",
+				"port" : 50053
+			},
+			{
+				"id" : 4,
+				"ipAddress" : "127.0.0.1",
+				"port" : 50054
+			},
+			{
+				"id" : 5,
+				"ipAddress" : "127.0.0.1",
+				"port" : 50055
+			}
+		]
+	}
+```
+
 设置心跳间隔与状态机，逐一启动Server：    
 ```
-	public static void main(String[] args) throws IOException {
+
+    public static void main(String[] args) throws IOException {
         Raft raft = new Raft();
         Options options = new Options();
         options.setOption("HbInterval", 1000);
@@ -85,6 +89,7 @@ Raft是一种管理日志的一致性算法。相比Paxos，其更加容易理�
         raft.setStateMachine(new KeyValueMachine());
         raft.start();
     }
+    
 ```
 3. 启动Client，向集群轮询发送请求：    
 ```
