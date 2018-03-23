@@ -93,18 +93,18 @@ Raft是一种管理日志的一致性算法。相比Paxos，其更加容易理�
 ```
 3. 启动Client，向集群轮询发送请求：    
 ```
-	public static void main(String[] args) {
-		RaftClient client = new RaftClient(ConfReader.getConf().getRemoteNode());
-		client.submit("PUT", "X 1");
-		client.submit("GET", "X");
-		client.submit("DEL", "X");
-	}   
+    public static void main(String[] args) {
+	RaftClient client = new RaftClient(ConfReader.getConf().getRemoteNode());
+	client.submit("PUT", "X 1");
+	client.submit("GET", "X");
+	client.submit("DEL", "X");
+    }   
 	
 ```
 
 ### TODO：
 1. 添加Raft日志压缩RPC的实现(论文第7章)。    
-2. 添加Raft动态增减节点的功能(论文第6章)，提高其拓展性。    
+2. 添加Raft动态增减节点的功能，提高其可拓展性(论文第6章)。    
 3. 优化实现，思考改进点。   
 
 ### 参考资料：
